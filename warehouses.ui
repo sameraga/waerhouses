@@ -729,7 +729,7 @@
                  </widget>
                 </item>
                 <item row="1" column="1">
-                 <widget class="QComboBox" name="internal_ex_name">
+                 <widget class="QComboBox" name="int_sender">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                     <horstretch>0</horstretch>
@@ -824,7 +824,7 @@
                  </widget>
                 </item>
                 <item row="1" column="2">
-                 <widget class="QComboBox" name="internal_im_name">
+                 <widget class="QComboBox" name="int_receiver">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                     <horstretch>0</horstretch>
@@ -1876,8 +1876,8 @@
                         <rect>
                          <x>0</x>
                          <y>0</y>
-                         <width>239</width>
-                         <height>586</height>
+                         <width>234</width>
+                         <height>550</height>
                         </rect>
                        </property>
                        <layout class="QGridLayout" name="gridLayout_7" columnstretch="2,0,0">
@@ -4850,7 +4850,7 @@
      <x>0</x>
      <y>0</y>
      <width>1280</width>
-     <height>34</height>
+     <height>30</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu">
@@ -4885,32 +4885,32 @@
   </action>
  </widget>
  <tabstops>
-  <tabstop>listWidget</tabstop>
-  <tabstop>internal_code</tabstop>
-  <tabstop>internal_type</tabstop>
-  <tabstop>ch_internal_date_from</tabstop>
-  <tabstop>ch_internal_date_to</tabstop>
-  <tabstop>internal_date_from</tabstop>
-  <tabstop>internal_date_to</tabstop>
-  <tabstop>btn_add_internal</tabstop>
-  <tabstop>btn_edit_internal</tabstop>
-  <tabstop>btn_print_table_internal</tabstop>
-  <tabstop>btn_to_exel_internal</tabstop>
-  <tabstop>internal_page_size</tabstop>
-  <tabstop>internal_last</tabstop>
-  <tabstop>internal_post</tabstop>
-  <tabstop>internal_page_num</tabstop>
-  <tabstop>internal_previous</tabstop>
-  <tabstop>internal_first</tabstop>
-  <tabstop>ei_code</tabstop>
-  <tabstop>ei_im_name</tabstop>
-  <tabstop>ch_ei_date_from</tabstop>
-  <tabstop>ch_ei_date_to</tabstop>
-  <tabstop>ei_date_from</tabstop>
-  <tabstop>ei_date_to</tabstop>
-  <tabstop>btn_add_ei</tabstop>
-  <tabstop>btn_edit_ei</tabstop>
-  <tabstop>btn_print_table_ei</tabstop>
+  <tabstop>m_code</tabstop>
+  <tabstop>m_name</tabstop>
+  <tabstop>m_desciption</tabstop>
+  <tabstop>m_type</tabstop>
+  <tabstop>ch_pr</tabstop>
+  <tabstop>m_less_quantity</tabstop>
+  <tabstop>m_price</tabstop>
+  <tabstop>m_link</tabstop>
+  <tabstop>m_source</tabstop>
+  <tabstop>m_note</tabstop>
+  <tabstop>btn_add_material</tabstop>
+  <tabstop>btn_edit_material</tabstop>
+  <tabstop>btn_delete_material</tabstop>
+  <tabstop>btn_clear_material</tabstop>
+  <tabstop>btn_print_table_m</tabstop>
+  <tabstop>btn_to_exel_m</tabstop>
+  <tabstop>m_code_search</tabstop>
+  <tabstop>m_name_search</tabstop>
+  <tabstop>m_type_search</tabstop>
+  <tabstop>m_table</tabstop>
+  <tabstop>m_page_size</tabstop>
+  <tabstop>m_last</tabstop>
+  <tabstop>m_post</tabstop>
+  <tabstop>m_page_num</tabstop>
+  <tabstop>m_previous</tabstop>
+  <tabstop>m_first</tabstop>
   <tabstop>btn_to_exel_ei</tabstop>
   <tabstop>ei_page_size</tabstop>
   <tabstop>ei_last</tabstop>
@@ -4936,6 +4936,146 @@
   <tabstop>new_pass_confirm</tabstop>
   <tabstop>btn_save_pass</tabstop>
   <tabstop>btn_cancel_pass</tabstop>
+  <tabstop>tabWidget</tabstop>
+  <tabstop>req_date_to</tabstop>
+  <tabstop>ch_req_date_from</tabstop>
+  <tabstop>req_date_from</tabstop>
+  <tabstop>ch_req_date_to</tabstop>
+  <tabstop>req_code</tabstop>
+  <tabstop>req_brunch</tabstop>
+  <tabstop>req_table</tabstop>
+  <tabstop>req_page_size</tabstop>
+  <tabstop>req_last</tabstop>
+  <tabstop>req_post</tabstop>
+  <tabstop>req_page_num</tabstop>
+  <tabstop>req_previous</tabstop>
+  <tabstop>req_first</tabstop>
+  <tabstop>btn_add_req</tabstop>
+  <tabstop>btn_edit_req</tabstop>
+  <tabstop>btn_print_table_req</tabstop>
+  <tabstop>btn_to_exel_req</tabstop>
+  <tabstop>int_sender</tabstop>
+  <tabstop>int_receiver</tabstop>
+  <tabstop>ei_req_code</tabstop>
+  <tabstop>ee_date_to</tabstop>
+  <tabstop>ee_type</tabstop>
+  <tabstop>ch_ee_date_to</tabstop>
+  <tabstop>ee_date_from</tabstop>
+  <tabstop>ch_ee_date_from</tabstop>
+  <tabstop>ee_code</tabstop>
+  <tabstop>ee_brunch</tabstop>
+  <tabstop>ee_table</tabstop>
+  <tabstop>ee_page_size</tabstop>
+  <tabstop>ee_last</tabstop>
+  <tabstop>ee_post</tabstop>
+  <tabstop>ee_page_num</tabstop>
+  <tabstop>ee_previous</tabstop>
+  <tabstop>ee_first</tabstop>
+  <tabstop>btn_add_ee</tabstop>
+  <tabstop>btn_edit_ee</tabstop>
+  <tabstop>btn_print_table_ee</tabstop>
+  <tabstop>btn_to_exel_ee</tabstop>
+  <tabstop>tabWidget_3</tabstop>
+  <tabstop>scrollArea</tabstop>
+  <tabstop>m_branches</tabstop>
+  <tabstop>ch_internal_date_from</tabstop>
+  <tabstop>internal_date_from</tabstop>
+  <tabstop>internal_date_to</tabstop>
+  <tabstop>btn_add_internal</tabstop>
+  <tabstop>btn_print_table_ei</tabstop>
+  <tabstop>internal_type</tabstop>
+  <tabstop>ch_internal_date_to</tabstop>
+  <tabstop>internal_code</tabstop>
+  <tabstop>internal_page_num</tabstop>
+  <tabstop>btn_edit_ei</tabstop>
+  <tabstop>internal_previous</tabstop>
+  <tabstop>internal_first</tabstop>
+  <tabstop>ei_code</tabstop>
+  <tabstop>ei_im_name</tabstop>
+  <tabstop>ch_ei_date_from</tabstop>
+  <tabstop>ch_ei_date_to</tabstop>
+  <tabstop>ei_date_from</tabstop>
+  <tabstop>ei_date_to</tabstop>
+  <tabstop>btn_add_ei</tabstop>
+  <tabstop>btn_edit_internal</tabstop>
+  <tabstop>btn_print_table_internal</tabstop>
+  <tabstop>btn_to_exel_internal</tabstop>
+  <tabstop>internal_page_size</tabstop>
+  <tabstop>internal_last</tabstop>
+  <tabstop>internal_post</tabstop>
+  <tabstop>m_b_name</tabstop>
+  <tabstop>listWidget</tabstop>
+  <tabstop>m_place</tabstop>
+  <tabstop>m_quantity</tabstop>
+  <tabstop>m_b_code</tabstop>
+  <tabstop>m_b_code_search</tabstop>
+  <tabstop>m_branches_search</tabstop>
+  <tabstop>material_branch_table</tabstop>
+  <tabstop>material_branch_page_size</tabstop>
+  <tabstop>material_branch_last</tabstop>
+  <tabstop>material_branch_post</tabstop>
+  <tabstop>material_branch_page_num</tabstop>
+  <tabstop>material_branch_previous</tabstop>
+  <tabstop>material_branch_first</tabstop>
+  <tabstop>btn_add_material_branch</tabstop>
+  <tabstop>btn_edit_material_branch</tabstop>
+  <tabstop>btn_delete_material_branch</tabstop>
+  <tabstop>btn_clear_material_branch</tabstop>
+  <tabstop>btn_print_table_material_branch</tabstop>
+  <tabstop>btn_to_exel_material_branch</tabstop>
+  <tabstop>tabWidget_2</tabstop>
+  <tabstop>p_code_search</tabstop>
+  <tabstop>p_name_search</tabstop>
+  <tabstop>p_table</tabstop>
+  <tabstop>p_page_size</tabstop>
+  <tabstop>p_last</tabstop>
+  <tabstop>p_post</tabstop>
+  <tabstop>p_page_num</tabstop>
+  <tabstop>p_previous</tabstop>
+  <tabstop>p_first</tabstop>
+  <tabstop>btn_edit_show_product</tabstop>
+  <tabstop>btn_delete_product</tabstop>
+  <tabstop>btn_print_table_p</tabstop>
+  <tabstop>btn_to_exel_p</tabstop>
+  <tabstop>p_name</tabstop>
+  <tabstop>p_description</tabstop>
+  <tabstop>p_price</tabstop>
+  <tabstop>p_cost</tabstop>
+  <tabstop>p_code</tabstop>
+  <tabstop>p_mat_table</tabstop>
+  <tabstop>btn_save_product</tabstop>
+  <tabstop>btn_clear_product</tabstop>
+  <tabstop>p_b_name</tabstop>
+  <tabstop>p_branches</tabstop>
+  <tabstop>p_place</tabstop>
+  <tabstop>p_quantity</tabstop>
+  <tabstop>p_b_code</tabstop>
+  <tabstop>p_b_code_search</tabstop>
+  <tabstop>p_branches_search</tabstop>
+  <tabstop>product_branch_table</tabstop>
+  <tabstop>product_branch_page_size</tabstop>
+  <tabstop>product_branch_last</tabstop>
+  <tabstop>product_branch_post</tabstop>
+  <tabstop>product_branch_page_num</tabstop>
+  <tabstop>product_branch_previous</tabstop>
+  <tabstop>product_branch_first</tabstop>
+  <tabstop>btn_add_product_branch</tabstop>
+  <tabstop>btn_edit_product_branch</tabstop>
+  <tabstop>btn_delete_product_branch</tabstop>
+  <tabstop>btn_clear_product_branch</tabstop>
+  <tabstop>btn_print_table_product_branch</tabstop>
+  <tabstop>btn_to_exel_product_branch</tabstop>
+  <tabstop>p_description_manufact</tabstop>
+  <tabstop>p_name_manufact</tabstop>
+  <tabstop>p_price_manufact_2</tabstop>
+  <tabstop>quantity_manufact</tabstop>
+  <tabstop>p_code_manufact</tabstop>
+  <tabstop>p_price_manufact</tabstop>
+  <tabstop>p_cost_manufact</tabstop>
+  <tabstop>p_cost_manufact_2</tabstop>
+  <tabstop>p_mat_table_manufact</tabstop>
+  <tabstop>btn_manufact</tabstop>
+  <tabstop>btn_clear_manufact</tabstop>
  </tabstops>
  <resources>
   <include location="icons.qrc"/>
@@ -4948,6 +5088,7 @@
   <include location="icons.qrc"/>
   <include location="icons.qrc"/>
   <include location="icons.qrc"/>
+  <include location="../../.designer/backup/icons.qrc"/>
  </resources>
  <connections>
   <connection>

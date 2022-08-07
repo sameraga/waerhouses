@@ -26,6 +26,9 @@
          <property name="text">
           <string>نوع الفاتورة</string>
          </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
         </widget>
        </item>
        <item row="3" column="1">
@@ -33,27 +36,15 @@
          <property name="layoutDirection">
           <enum>Qt::LeftToRight</enum>
          </property>
-         <item>
-          <property name="text">
-           <string/>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>ادخال</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>اخراج</string>
-          </property>
-         </item>
         </widget>
        </item>
        <item row="3" column="2">
         <widget class="QLabel" name="label_23">
          <property name="text">
-          <string>الفرع المستلم</string>
+          <string>الفرع المستقبل</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
          </property>
         </widget>
        </item>
@@ -61,6 +52,9 @@
         <widget class="QLabel" name="label_21">
          <property name="text">
           <string>تاريخ الفاتورة</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
          </property>
         </widget>
        </item>
@@ -85,12 +79,18 @@
          <property name="text">
           <string>رقم الفاتورة</string>
          </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
         </widget>
        </item>
        <item row="3" column="0">
         <widget class="QLabel" name="label_22">
          <property name="text">
-          <string>الفرع المصدر</string>
+          <string>الفرع المرسل</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
          </property>
         </widget>
        </item>
@@ -132,11 +132,6 @@
          <property name="layoutDirection">
           <enum>Qt::LeftToRight</enum>
          </property>
-         <item>
-          <property name="text">
-           <string/>
-          </property>
-         </item>
          <item>
           <property name="text">
            <string>ادخال</string>

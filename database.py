@@ -103,6 +103,19 @@ class Database:
         for d in del_ids:
             self.delete_row(table, d['id'])
 
+    def insert_internal_order(self, table, dic, fk):
+        new_ids = [d['id'] for d in dic]
+        placeholders = ", ".join("?" * len(new_ids))
+        del_ids = self.connection.execute(f"SELECT id FROM {table} WHERE in_id = ? and id not in ({placeholders})",
+                                          tuple([fk, *new_ids])).fetchall()
+        for d in dic:
+            if self.count_table(table, d['id']) == '1':
+                self.update_row(table, d)
+            else:
+                self.insert_row(table, d)
+        for d in del_ids:
+            self.delete_row(table, d['id'])
+
     def insert_row(self, table, row):
         def _insert(obj):
             columns = ', '.join(obj.keys())
@@ -142,6 +155,12 @@ class Database:
     def get_material_product_by_code(self, table, code) -> list:
         code = f'%{code}%'
         return self.connection.execute(f"select * from {table} where code like ?", (code, )).fetchall()
+
+    def get_material_available_by_code(self, code, br_id) -> dict:
+        return self.connection.execute(f"select material.code, material.id, available_m.m_id, material.name, "
+                                       f"available_m.quantity, material.price FROM material JOIN available_m on "
+                                       f"material.id = available_m.m_id WHERE material.code = ? AND "
+                                       f"available_m.b_id = ?", (code, br_id)).fetchone()
 
     def query_all_material(self, filter: dict, limit1, limit2):
         sql_cmd = "SELECT id, code, name, description, type, price from material"
@@ -298,6 +317,12 @@ class Database:
 
     def get_order_requests(self, table, r_id):
         return self.connection.execute(f"SELECT * FROM {table} WHERE req_id = ?", (r_id,)).fetchall()
+
+    def get_order_bill(self, table, b_id):
+        return self.connection.execute(f"SELECT * FROM {table} WHERE b_id = ?", (b_id,)).fetchall()
+
+    def get_order_int(self, table, b_id):
+        return self.connection.execute(f"SELECT * FROM {table} WHERE in_id = ?", (b_id,)).fetchall()
 
 # def get_noti_pro1(self):
 #     return self.connection.execute(f"SELECT code, name, quantity FROM product WHERE quantity <= less_quantity").fetchall()
