@@ -36,7 +36,7 @@ class Database:
         self.connection.commit()
 
     def is_user(self, username):
-        return self.connection.execute("select id from branches where code = ?", (username,)).fetchone()
+        return self.connection.execute("select id, permission from branches where code = ?", (username,)).fetchone()
 
     def count_row(self, table, r):
         if r == 1:
@@ -45,22 +45,28 @@ class Database:
             return self.connection.execute(f'select count(*) as count from {table} where code = ?', (r,)).fetchone()[
                 'count']
 
+    def count_quantity_branch(self, table, bid, mid):
+        return self.connection.execute(f"select count(*) as count from {table} where b_id = ? and m_id = ?", (bid, mid)).fetchone()['count']
+
     def get_next_id(self, table):
         if self.connection.execute(f"select max(id)+1 as seq from {table}").fetchone()['seq'] == '':
             return 1
         return self.connection.execute(f"select max(id)+1 as seq from {table}").fetchone()['seq']
 
     def query_row(self, table, id):
-        return self.connection.execute(f"select * from {table} where id = {id}").fetchone()
+        return self.connection.execute(f"select * from {table} where id = ?", (id, )).fetchone()
 
     def query_csp(self, table):
-        return {e['id']: e['name'] for e in self.connection.execute(f'select id, name from {table}').fetchall()}
+        return {e['id']: e['code'] for e in self.connection.execute(f'select id, code from {table}').fetchall()}
 
-    def query_branches(self):
-        return {e['id']: e['code'] for e in self.connection.execute('select id, code from branches').fetchall()}
+    def query_req(self):
+        return {e['id']: e['code'] for e in self.connection.execute('select id, code from requests').fetchall()}
 
     def get_id_by_code(self, table, code):
         return self.connection.execute(f"select id from {table} where code = ?", (code,)).fetchone()['id']
+
+    def get_id_by_mid(self, table, mid, bid):
+        return self.connection.execute(f"select id from {table} where m_id = ? and branch_id = ?", (mid, bid)).fetchone()['id']
 
     def get_code_by_id(self, table, id):
         return self.connection.execute(f'select code from {table} where id = ?', (id,)).fetchone()['code']
@@ -69,30 +75,18 @@ class Database:
     # def count_table(self, table, id):
     #     return self.connection.execute(f"SELECT count(*) as count FROM {table} where id = '{id}'").fetchone()['count']
     #
-    # def get_earnings(self, day):
-    #     return self.connection.execute(f"SELECT sum((quantity * (SELECT sell_price - buy_price "
-    #                                    f"FROM product WHERE id = p_id)) - discount) as earnings FROM sell_order "
-    #                                    f"WHERE b_id in (SELECT id FROM bill_sell WHERE date <= DATE() and date >= DATE(DATE(),'-{day} day'))").fetchone()['earnings']
+    # def insert_table(self, table, dic):
+    #     new_ids = [int(d['id']) for d in dic]
+    #     placeholders = ", ".join("?" * len(new_ids))
+    #     del_ids = self.connection.execute(f"SELECT id FROM {table} WHERE branch_id = {dic[0]['branch_id']} and id not in ({placeholders})", tuple(new_ids)).fetchall()
+    #     for d in dic:
+    #         if self.count_table(table, d['id']) == '1':
+    #             self.update_row(table, d)
+    #         else:
+    #             self.insert_row(table, d)
+    #     for d in del_ids:
+    #         self.delete_row(table, d['id'])
     #
-    # def get_sales(self, day):
-    #     return self.connection.execute(f"SELECT sum(total - discount) as sales FROM bill_sell WHERE date <= DATE() and date >= DATE(DATE(),'-{day} day')").fetchone()['sales']
-    #
-    # def get_purchases(self, day):
-    #     return self.connection.execute(f"SELECT sum(total - discount) as purchases FROM bill_buy WHERE date <= DATE() and date >= DATE(DATE(),'-{day} day')").fetchone()['purchases']
-    #
-    def insert_table(self, table, dic, fk):
-        new_ids = [int(d['id']) for d in dic]
-        placeholders = ", ".join("?" * len(new_ids))
-        del_ids = self.connection.execute(f"SELECT id FROM {table} WHERE b_id = ? and id not in ({placeholders})",
-                                          tuple([fk, *new_ids])).fetchall()
-        for d in dic:
-            if self.count_table(table, d['id']) == '1':
-                self.update_row(table, d)
-            else:
-                self.insert_row(table, d)
-        for d in del_ids:
-            self.delete_row(table, d['id'])
-
     def insert_row(self, table, row):
         def _insert(obj):
             columns = ', '.join(obj.keys())
@@ -110,8 +104,10 @@ class Database:
     def update_row(self, table, row):
         def _update(obj):
             placeholders = ', '.join([f'{key}=:{key}' for key in obj.keys()])
-            query = f"UPDATE {table} SET {placeholders} WHERE id = '{obj['id']}'"
-            self.connection.execute(query, obj)
+            query = f"UPDATE {table} SET {placeholders} WHERE id = ?"
+            li = list(obj.values())
+            li.append(obj['id'])
+            self.connection.execute(query, tuple(li))
             self.connection.commit()
 
         if isinstance(row, dict):
@@ -121,14 +117,11 @@ class Database:
                 _update(d)
 
     def delete_row(self, table, id):
-        self.connection.execute(f'delete from {table} where id = {id}')
+        self.connection.execute(f'delete from {table} where id = ?', (id,))
         self.connection.commit()
 
-    # product
-    # ###############################################################
     def get_material_by_code(self, code):
-        return self.connection.execute(f"select id, name, description, price, link from material where code = ?",
-                                       (code,)).fetchone()
+        return self.connection.execute(f"select id, name, description, price, link from material where code = ?", (code, )).fetchone()
 
     def query_all_material(self, filter: dict, limit1, limit2):
         sql_cmd = "SELECT id, code, name, description, type, price from material"
@@ -143,7 +136,8 @@ class Database:
                 filter['name'] = f'%{filter["name"]}%'
                 filter_cmd.append(f'name like :name')
             if 'type' in filter:
-                filter_cmd.append(f'type =:type')
+                filter['type'] = f'%{filter["type"]}%'
+                filter_cmd.append(f'type like :type')
 
             sql_cmd += ' and '.join(filter_cmd)
             sql_cmd += f' limit {limit1}, {limit2}'
@@ -152,8 +146,29 @@ class Database:
             sql_cmd += f' limit {limit1}, {limit2}'
             return self.connection.execute(sql_cmd).fetchall()
 
+    def query_all_material_branch(self, table, filter: dict, limit1, limit2):
+        sql_cmd = f"SELECT id, b_id, m_id, quantity, place from {table}"
+        if filter:
+            sql_cmd += " where "
+            filter_cmd = []
+            if 'b_id' in filter:
+                filter_cmd.append(f'b_id =:b_id')
+            if 'm_code' in filter:
+                filter['m_code'] = f'%{filter["m_code"]}%'
+                filter_cmd.append(f'm_id in (select id from material where code like :m_code)')
+
+            sql_cmd += ' and '.join(filter_cmd)
+            sql_cmd += f' limit {limit1}, {limit2}'
+            return self.connection.execute(sql_cmd, filter).fetchall()
+        else:
+            sql_cmd += f' limit {limit1}, {limit2}'
+            return self.connection.execute(sql_cmd).fetchall()
+
+    # product
+    # ###############################################################
+
     def query_all_product(self, filter1: dict, limit1, limit2):
-        sql_cmd = "SELECT id, code, name, description, quantity, price, cost from product"
+        sql_cmd = "SELECT id, code, name, description, price, cost from product"
 
         if filter1:
             sql_cmd += " where "
@@ -172,20 +187,6 @@ class Database:
             sql_cmd += f' limit {limit1}, {limit2}'
             return self.connection.execute(sql_cmd).fetchall()
 
-    # # ################################################################
-    #
-    # # customer and suppliers
-    # # ################################################################
-    #
-    # def get_id_by_name(self, table, name):
-    #     return self.connection.execute(f"select id from {table} where name = '{name}'").fetchone()['id']
-    #
-    # def get_name_by_id(self, table, id):
-    #     return self.connection.execute(f"select name from {table} where id = {id}").fetchone()['name']
-    #
-    # def get_phone_by_name(self, table, name):
-    #     return self.connection.execute(f"select phone from {table} where name = '{name}'").fetchone()['phone']
-    #
     # def query_all_cs(self, table, filter: dict, limit1, limit2):
     #     sql_cmd = f"SELECT id, code, name, phone, balance from {table}"
     #
@@ -244,8 +245,8 @@ class Database:
             if 'code' in filter:
                 filter['code'] = f'%{filter["code"]}%'
                 filter_cmd.append(f'code like :code')
-            if 'b_id' in filter:
-                filter_cmd.append(f'b_id =:b_id')
+            if 'branch_id' in filter:
+                filter_cmd.append(f'branch_id =:branch_id')
             if 'date_from' in filter:
                 if 'date_to' in filter:
                     filter_cmd.append(f'date between :date_from and :date_to')
@@ -262,8 +263,8 @@ class Database:
     def get_product_material(self, table, p_id):
         return self.connection.execute(f"SELECT * FROM {table} WHERE p_id = ?", (p_id,)).fetchall()
 
-    def get_order_bill(self, table, b_id):
-        return self.connection.execute(f"SELECT * FROM {table} WHERE req_id = ?", (b_id,)).fetchall()
+    def get_order_requests(self, table, r_id):
+        return self.connection.execute(f"SELECT * FROM {table} WHERE req_id = ?", (r_id,)).fetchall()
 
 # def get_noti_pro1(self):
 #     return self.connection.execute(f"SELECT code, name, quantity FROM product WHERE quantity <= less_quantity").fetchall()

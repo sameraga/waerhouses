@@ -29,7 +29,7 @@
         </widget>
        </item>
        <item row="3" column="1">
-        <widget class="QComboBox" name="sender_brunch">
+        <widget class="QComboBox" name="comboBox_3">
          <property name="layoutDirection">
           <enum>Qt::LeftToRight</enum>
          </property>
@@ -128,7 +128,7 @@
         </widget>
        </item>
        <item row="1" column="1">
-        <widget class="QComboBox" name="bill_type">
+        <widget class="QComboBox" name="comboBox">
          <property name="layoutDirection">
           <enum>Qt::LeftToRight</enum>
          </property>
@@ -150,7 +150,7 @@
         </widget>
        </item>
        <item row="3" column="3">
-        <widget class="QComboBox" name="receiver_brunch">
+        <widget class="QComboBox" name="comboBox_4">
          <property name="layoutDirection">
           <enum>Qt::LeftToRight</enum>
          </property>
@@ -159,7 +159,7 @@
       </layout>
      </item>
      <item>
-      <widget class="QTableWidget" name="internal_table">
+      <widget class="QTableWidget" name="bb_table">
        <property name="editTriggers">
         <set>QAbstractItemView::AllEditTriggers</set>
        </property>
@@ -262,7 +262,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="btn_export_bill">
+        <widget class="QPushButton" name="btn_cancel_2">
          <property name="text">
           <string>تصدير</string>
          </property>
@@ -283,7 +283,7 @@
  </widget>
  <tabstops>
   <tabstop>b_date</tabstop>
-  <tabstop>internal_table</tabstop>
+  <tabstop>bb_table</tabstop>
  </tabstops>
  <resources/>
  <connections/>
