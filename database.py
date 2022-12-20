@@ -56,8 +56,8 @@ class Database:
     def query_csp(self, table):
         return {e['id']: e['name'] for e in self.connection.execute(f'select id, name from {table}').fetchall()}
 
-    def query_req(self):
-        return {e['id']: e['code'] for e in self.connection.execute('select id, code from requests').fetchall()}
+    def query_branches(self):
+        return {e['id']: e['code'] for e in self.connection.execute('select id, code from branches').fetchall()}
 
     def get_id_by_code(self, table, code):
         return self.connection.execute(f"select id from {table} where code = ?", (code,)).fetchone()['id']
@@ -80,18 +80,19 @@ class Database:
     # def get_purchases(self, day):
     #     return self.connection.execute(f"SELECT sum(total - discount) as purchases FROM bill_buy WHERE date <= DATE() and date >= DATE(DATE(),'-{day} day')").fetchone()['purchases']
     #
-    # def insert_table(self, table, dic):
-    #     new_ids = [int(d['id']) for d in dic]
-    #     placeholders = ", ".join("?" * len(new_ids))
-    #     del_ids = self.connection.execute(f"SELECT id FROM {table} WHERE b_id = {dic[0]['b_id']} and id not in ({placeholders})", tuple(new_ids)).fetchall()
-    #     for d in dic:
-    #         if self.count_table(table, d['id']) == '1':
-    #             self.update_row(table, d)
-    #         else:
-    #             self.insert_row(table, d)
-    #     for d in del_ids:
-    #         self.delete_row(table, d['id'])
-    #
+    def insert_table(self, table, dic, fk):
+        new_ids = [int(d['id']) for d in dic]
+        placeholders = ", ".join("?" * len(new_ids))
+        del_ids = self.connection.execute(f"SELECT id FROM {table} WHERE b_id = ? and id not in ({placeholders})",
+                                          tuple([fk, *new_ids])).fetchall()
+        for d in dic:
+            if self.count_table(table, d['id']) == '1':
+                self.update_row(table, d)
+            else:
+                self.insert_row(table, d)
+        for d in del_ids:
+            self.delete_row(table, d['id'])
+
     def insert_row(self, table, row):
         def _insert(obj):
             columns = ', '.join(obj.keys())
@@ -261,8 +262,8 @@ class Database:
     def get_product_material(self, table, p_id):
         return self.connection.execute(f"SELECT * FROM {table} WHERE p_id = ?", (p_id,)).fetchall()
 
-    def get_order_requests(self, table, r_id):
-        return self.connection.execute(f"SELECT * FROM {table} WHERE req_id = ?", (r_id,)).fetchall()
+    def get_order_bill(self, table, b_id):
+        return self.connection.execute(f"SELECT * FROM {table} WHERE req_id = ?", (b_id,)).fetchall()
 
 # def get_noti_pro1(self):
 #     return self.connection.execute(f"SELECT code, name, quantity FROM product WHERE quantity <= less_quantity").fetchall()
