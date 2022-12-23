@@ -42,7 +42,7 @@ class Database:
         if r == 1:
             return self.connection.execute(f'select count(*) as count from {table}').fetchone()['count']
         else:
-            return self.connection.execute(f'select count(*) as count from {table} where code = ?', (r,)).fetchone()[
+            return self.connection.execute(f'select count(*) as count from {table} where code = ?', (r, )).fetchone()[
                 'count']
 
     def count_quantity_branch(self, table, bid, mid):
@@ -63,30 +63,30 @@ class Database:
         return {e['id']: e['code'] for e in self.connection.execute('select id, code from requests').fetchall()}
 
     def get_id_by_code(self, table, code):
-        return self.connection.execute(f"select id from {table} where code = ?", (code,)).fetchone()['id']
+        return self.connection.execute(f"select id from {table} where code = ?", (code, )).fetchone()['id']
 
     def get_id_by_mid(self, table, mid, bid):
         return self.connection.execute(f"select id from {table} where m_id = ? and branch_id = ?", (mid, bid)).fetchone()['id']
 
     def get_code_by_id(self, table, id):
-        return self.connection.execute(f'select code from {table} where id = ?', (id,)).fetchone()['code']
+        return self.connection.execute(f'select code from {table} where id = ?', (id, )).fetchone()['code']
 
-    #
-    # def count_table(self, table, id):
-    #     return self.connection.execute(f"SELECT count(*) as count FROM {table} where id = '{id}'").fetchone()['count']
-    #
-    # def insert_table(self, table, dic):
-    #     new_ids = [int(d['id']) for d in dic]
-    #     placeholders = ", ".join("?" * len(new_ids))
-    #     del_ids = self.connection.execute(f"SELECT id FROM {table} WHERE branch_id = {dic[0]['branch_id']} and id not in ({placeholders})", tuple(new_ids)).fetchall()
-    #     for d in dic:
-    #         if self.count_table(table, d['id']) == '1':
-    #             self.update_row(table, d)
-    #         else:
-    #             self.insert_row(table, d)
-    #     for d in del_ids:
-    #         self.delete_row(table, d['id'])
-    #
+    def count_table(self, table, id):
+        return self.connection.execute(f"SELECT count(*) as count FROM {table} where id = ?", (id, )).fetchone()['count']
+
+    def insert_table(self, table, dic, fk):
+        new_ids = [d['id'] for d in dic]
+        placeholders = ", ".join("?" * len(new_ids))
+        del_ids = self.connection.execute(f"SELECT id FROM {table} WHERE p_id = ? and id not in ({placeholders})",
+                                          tuple([fk, *new_ids])).fetchall()
+        for d in dic:
+            if self.count_table(table, d['id']) == '1':
+                self.update_row(table, d)
+            else:
+                self.insert_row(table, d)
+        for d in del_ids:
+            self.delete_row(table, d['id'])
+
     def insert_row(self, table, row):
         def _insert(obj):
             columns = ', '.join(obj.keys())
@@ -117,11 +117,15 @@ class Database:
                 _update(d)
 
     def delete_row(self, table, id):
-        self.connection.execute(f'delete from {table} where id = ?', (id,))
+        self.connection.execute(f'delete from {table} where id = ?', (id, ))
         self.connection.commit()
 
-    def get_material_by_code(self, code):
+    def get_material_by_code(self, code) -> dict:
         return self.connection.execute(f"select id, name, description, price, link from material where code = ?", (code, )).fetchone()
+
+    def get_material_product_by_code(self, code) -> list:
+        code = f'%{code}%'
+        return self.connection.execute("select id, code, name, price from material where code like ?", (code, )).fetchall()
 
     def query_all_material(self, filter: dict, limit1, limit2):
         sql_cmd = "SELECT id, code, name, description, type, price from material"
@@ -140,7 +144,9 @@ class Database:
                 filter_cmd.append(f'type like :type')
 
             sql_cmd += ' and '.join(filter_cmd)
-            sql_cmd += f' limit {limit1}, {limit2}'
+            sql_cmd += f' limit :limit1, :limit2'
+            filter['limit1'] = limit1
+            filter['limit2'] = limit2
             return self.connection.execute(sql_cmd, filter).fetchall()
         else:
             sql_cmd += f' limit {limit1}, {limit2}'
@@ -261,7 +267,7 @@ class Database:
             return self.connection.execute(sql_cmd).fetchall()
 
     def get_product_material(self, table, p_id):
-        return self.connection.execute(f"SELECT * FROM {table} WHERE p_id = ?", (p_id,)).fetchall()
+        return self.connection.execute(f"SELECT * FROM {table} WHERE p_id = ?", (p_id, )).fetchall()
 
     def get_order_requests(self, table, r_id):
         return self.connection.execute(f"SELECT * FROM {table} WHERE req_id = ?", (r_id,)).fetchall()

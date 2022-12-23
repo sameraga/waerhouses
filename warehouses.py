@@ -21,6 +21,7 @@ from QDate import QDate
 
 import aes
 import database
+from dlg_choice_code import PrintDialog
 
 Form_Main, _ = uic.loadUiType('warehouses.ui')
 Form_Requests, _ = uic.loadUiType('requests.ui')
@@ -263,8 +264,6 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
         Form_Main.__init__(self)
         self.setupUi(self)
 
-        self.p_id = None
-
         self.config = None
 
         self.validator_code = QtGui.QRegExpValidator(QtCore.QRegExp('[\u0621-\u064A0-9a-zA-Z][0-9]*'))
@@ -443,8 +442,6 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
         self.m_less_quantity.setValidator(self.validator_int)
         self.m_price.setValidator(self.validator_money)
 
-        self.m_code_b.setText(USER)
-
         self._typing_timer_m.setSingleShot(True)
         self._typing_timer_m.timeout.connect(self.update_material_table)
 
@@ -573,7 +570,6 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
         global USER
         material = self.save_material_info()
         material['id'] = str(uuid8())
-        material['code'] = self.m_code_b.text() + '.' + material['code']
         if material['code'] and material['name']:
             if int(database.db.count_row("material", material['code'])) == 0:
                 database.db.insert_row("material", material)
@@ -835,8 +831,6 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
         self.p_price.setValidator(self.validator_money)
         self.p_cost.setValidator(self.validator_money)
 
-        self.p_code_b.setText(USER)
-
         self._typing_timer_p.setSingleShot(True)
         self._typing_timer_p.timeout.connect(self.update_product_table)
 
@@ -854,11 +848,11 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
         self.p_table.clicked.connect(lambda mi: self.one_click_p(self.p_table.item(mi.row(), 0).id))
 
         # btn
-        self.btn_save_product.clicked.connect(self.add_new_product)
-        self.btn_add_new_product.clicked.connect(self.add_new_product)
-        self.btn_clear_product.clicked.connect(self.clear_product_inputs)
-        self.btn_delete_product.clicked.connect(self.delete_product)
         self.btn_edit_show_product.clicked.connect(self.edit_show_product)
+        self.btn_delete_product.clicked.connect(self.delete_product)
+
+        self.btn_save_product.clicked.connect(self.save_product_info)
+        self.btn_clear_product.clicked.connect(self.clear_product_inputs)
 
         # print and to exel
         self.btn_print_table_p.clicked.connect(self.print_table_product)
@@ -894,6 +888,11 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
 
     def save_product_info(self):
         product = dict()
+        if self.product_id == 0:
+            product['id'] = str(uuid8())
+        else:
+            product['id'] = self.product_id
+
         product['code'] = self.p_code.text()
         product['name'] = self.p_name.text()
         product['description'] = self.p_description.text()
@@ -903,13 +902,13 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
         orders = []
         for idx in range(self.p_mat_table.rowCount()):
             order = dict()
-            order['p_id'] = self.p_id
+            order['p_id'] = self.product_id
             if self.p_mat_table.item(idx, 0) and self.p_mat_table.item(idx, 0).text():
                 if hasattr(self.p_mat_table.item(idx, 0), 'id'):
                     order['id'] = self.p_mat_table.item(idx, 0).id
-                    order['m_id'] = self.p_mat_table.item(idx, 0).pid
+                    order['m_id'] = self.p_mat_table.item(idx, 0).mid
                 else:
-                    order['id'] = int(database.db.get_next_id('product_material')) + idx
+                    order['id'] = str(uuid8())
                     order['m_id'] = database.db.get_id_by_code('material', self.p_mat_table.item(idx, 0).text())
                 if self.p_mat_table.item(idx, 2) and self.p_mat_table.item(idx, 2).text():
                     order['quantity'] = self.p_mat_table.item(idx, 2).text()
@@ -920,9 +919,11 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
             database.db.insert_row("product", product)
         else:
             database.db.update_row("product", product)
+        database.db.insert_table('product_material', orders, self.product_id)
 
-        database.db.insert_table('product', orders)
-        self.accept()
+        self.update_product_table()
+        self.clear_product_inputs()
+        self.tabWidget_2.setCurrentIndex(0)
 
     def update_product_table(self):
         fil = self.search_product_save()
@@ -950,52 +951,68 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
         self.p_mat_table: QtWidgets.QTableWidget
         if event.key() == QtCore.Qt.Key_Return:
             if self.p_mat_table.currentColumn() == 0 and self.p_mat_table.currentRow() + 1 == self.p_mat_table.rowCount():
-                self.update_table(self.p_mat_table.currentRow())
+                self.update_product_material_table(self.p_mat_table.currentRow())
+                self.p_mat_table.setRowCount(self.p_mat_table.rowCount() + 1)
+            elif self.p_mat_table.currentColumn() == 0 and self.p_mat_table.currentRow() + 1 != self.p_mat_table.rowCount():
+                self.update_product_material_table(self.p_mat_table.currentRow())
             else:
                 self.enter_event(self.p_mat_table.currentRow())
 
-    def enter_event(self, current_row):
+    def update_product_material_table(self, current_row):
         code = self.p_mat_table.item(current_row, 0).text()
-        material = database.db.get_material_by_code(code)
+        material = dict()
+        if len(database.db.get_material_product_by_code(code)) == 0:
+            QtWidgets.QMessageBox.warning(None, 'خطأ', 'الرقم غير موجود\n أعد ادخال رقم صحيح')
+            self.delete_order_product(current_row)
+            return
+        elif len(database.db.get_material_product_by_code(code)) == 1:
+            material = database.db.get_material_product_by_code(code)[0]
+        else:
+            dlg = PrintDialog(code)
+            dlg.exec()
+            print(dlg.result_value)
+            if dlg.result_value:
+                material = dlg.result_value
+            else:
+                QtWidgets.QMessageBox.warning(None, 'خطأ', 'الرقم غير موجود\n أعد ادخال رقم صحيح')
+                self.delete_order_product(current_row)
+                return
 
+        for idx in range(self.p_mat_table.rowCount() - 1):
+            if self.p_mat_table.item(idx, 0).text() == material['code'] and current_row != idx:
+                new = int(self.p_mat_table.item(idx, 2).text()) + 1
+                self.p_mat_table.setItem(idx, 2, QtWidgets.QTableWidgetItem(str(new)))
+                total = new * float(self.p_mat_table.item(current_row, 3).text())
+                total = round(total, 2)
+                self.p_mat_table.setItem(current_row, 4, QtWidgets.QTableWidgetItem(str(total)))
+                self.delete_order_product(current_row)
+                self.calculate_total_product()
+                return
+
+        self.p_mat_table.setItem(current_row, 0, QtWidgets.QTableWidgetItem(material['code']))
+        self.p_mat_table.item(current_row, 0).pid = material['id']
+        self.p_mat_table.setItem(current_row, 1, QtWidgets.QTableWidgetItem(material['name']))
+        self.p_mat_table.setItem(current_row, 2, QtWidgets.QTableWidgetItem('1'))
+        self.p_mat_table.setItem(current_row, 3, QtWidgets.QTableWidgetItem(str(material['price'])))
+        total = float(self.p_mat_table.item(current_row, 2).text()) * float(self.p_mat_table.item(current_row, 3).text())
+        total = round(total, 2)
+        self.p_mat_table.setItem(current_row, 4, QtWidgets.QTableWidgetItem(str(total)))
+
+        btn_delete = QtWidgets.QPushButton(QtGui.QIcon.fromTheme('delete'), '')
+        btn_delete.clicked.connect(lambda: self.delete_order_product(self.p_mat_table.currentRow()))
+        self.p_mat_table.setCellWidget(current_row, 5, btn_delete)
+        self.calculate_total_product()
+
+    def enter_event(self, current_row):
         if self.p_mat_table.item(current_row, 2).text() == '':
             self.p_mat_table.setItem(current_row, 2, QtWidgets.QTableWidgetItem('1'))
+
         quantity = int(self.p_mat_table.item(current_row, 2).text())
 
-        # total = quantity * float(self.p_mat_table.item(current_row, 3).text())
-        # self.p_mat_table.setItem(current_row, 4, QtWidgets.QTableWidgetItem(str(total)))
-        # self.calculate_total()
-
-    def update_table(self, current_row):
-        code = self.p_mat_table.item(current_row, 0).text()
-        material = database.db.get_material_by_code(code)
-        if material:
-            if int(material['quantity']) >= 1:
-                for idx in range(self.p_mat_table.rowCount() - 1):
-                    if self.p_mat_table.item(idx, 0).text() == code:
-                        new = int(self.p_mat_table.item(idx, 2).text()) + 1
-                        self.p_mat_table.setItem(idx, 2, QtWidgets.QTableWidgetItem(str(new)))
-                        self.p_mat_table.setItem(current_row, 0, QtWidgets.QTableWidgetItem(''))
-                        return
-
-                self.p_mat_table.item(current_row, 0).pid = material['id']
-                self.p_mat_table.setItem(current_row, 1, QtWidgets.QTableWidgetItem(material['name']))
-                self.p_mat_table.setItem(current_row, 2, QtWidgets.QTableWidgetItem('1'))
-                self.p_mat_table.setItem(current_row, 3, QtWidgets.QTableWidgetItem(str(material['price'])))
-
-                self.p_mat_table.setItem(current_row, 4, QtWidgets.QTableWidgetItem(
-                    str(float(self.p_mat_table.item(current_row, 2).text()) * float(
-                        self.p_mat_table.item(current_row, 3).text()))))
-
-                btn_delete = QtWidgets.QPushButton(QtGui.QIcon.fromTheme('delete'), '')
-                btn_delete.clicked.connect(lambda: self.delete_order(self.p_mat_table.currentRow()))
-                self.p_mat_table.setCellWidget(current_row, 5, btn_delete)
-                # self.calculate_total()
-            else:
-                self.p_mat_table.setItem(current_row, 0, QtWidgets.QTableWidgetItem(''))
-                QtWidgets.QMessageBox.warning(None, 'خطأ', 'غير متوفر\n لقد انتهت كمية هذه المادة بالفعل')
-        else:
-            QtWidgets.QMessageBox.warning(None, 'خطأ', 'الرقم غير موجود\n أعد ادخال رقم صحيح')
+        total = quantity * float(self.p_mat_table.item(current_row, 3).text())
+        total = round(total, 2)
+        self.p_mat_table.setItem(current_row, 4, QtWidgets.QTableWidgetItem(str(total)))
+        self.calculate_total_product()
 
     # def create_new_product(self):
     #     product = self.save_product_info()
@@ -1045,10 +1062,14 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
         self.p_price.setText('0')
         self.p_cost.setText('0')
 
+        self.p_mat_table.clearContents()
+        self.p_mat_table.setRowCount(1)
+
+        self.btn_edit_show_product.setEnabled(False)
         self.btn_delete_product.setEnabled(False)
 
     def delete_product(self):
-        product = self.save_product_info()
+        product = database.db.query_row("product", self.product_id)
         msg = QtWidgets.QMessageBox()
         button_reply = msg.question(self, 'تأكيد', f"هل أنت متأكد من حذف {product['name']} ؟ ",
                                     msg.Yes | msg.No,
@@ -1056,7 +1077,6 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
         if button_reply == msg.Yes:
             database.db.delete_row("product", self.product_id)
             self.update_product_table()
-            self.clear_product_inputs()
             toaster_Notify.QToaster.show_message(parent=self, message=f"حذف منتج\nتم حذف المنتج{product['name']} بنجاح")
 
     def edit_show_product(self):
@@ -1072,20 +1092,16 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
         self.product_id = id
         self.edit_show_product()
 
-    def fill_product(self, id):
-        if id == 0:
-            self.p_id = database.db.get_next_id('product')
-        else:
-            product = database.db.query_row('product', id)
-            self.p_id = product['id']
-            self.p_code.setText(product['code'])
-            self.p_name.setText(product['name'])
-            self.p_description.setText(product['description'])
-            self.p_quantity.setText(str(product['quantity']))
-            self.p_price.setText(str(product['price']))
-            self.p_cost.setText(str(product['cost']))
+    def fill_product_info(self, id):
+        product = database.db.query_row('product', id)
 
-        orders = database.db.get_product_material('pro_mat_v', self.p_id)
+        self.p_code.setText(product['code'])
+        self.p_name.setText(product['name'])
+        self.p_description.setText(product['description'])
+        self.p_price.setText(str(product['price']))
+        self.p_cost.setText(str(product['cost']))
+
+        orders = database.db.get_product_material('pro_mat_v', id)
         self.p_mat_table.setRowCount(len(orders) + 1)
         for row_idx, row in enumerate(orders):
             self.p_mat_table.setItem(row_idx, 0, QtWidgets.QTableWidgetItem(str(row['code'])))
@@ -1094,13 +1110,23 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
             self.p_mat_table.setItem(row_idx, 1, QtWidgets.QTableWidgetItem(str(row['name'])))
             self.p_mat_table.setItem(row_idx, 2, QtWidgets.QTableWidgetItem(str(row['quantity'])))
             self.p_mat_table.setItem(row_idx, 3, QtWidgets.QTableWidgetItem(str(row['price'])))
+            total = int(row['quantity']) * float(row['price'])
+            total = round(total, 2)
+            self.p_mat_table.setItem(row_idx, 4, QtWidgets.QTableWidgetItem(str(total)))
             btn_delete = QtWidgets.QPushButton(QtGui.QIcon.fromTheme('delete'), '')
-            btn_delete.clicked.connect(lambda: self.delete_order(self.p_mat_table.currentRow()))
-            self.bb_table.setCellWidget(row_idx, 5, btn_delete)
+            btn_delete.clicked.connect(lambda: self.delete_order_product(self.p_mat_table.currentRow()))
+            self.p_mat_table.setCellWidget(row_idx, 5, btn_delete)
 
-    def delete_order(self, current_row):
-        self.bb_table.removeRow(current_row)
-        self.calculate_total()
+    def delete_order_product(self, current_row):
+        self.p_mat_table.removeRow(current_row)
+        self.calculate_total_product()
+
+    def calculate_total_product(self):
+        total = 0
+        for i in range(0, self.p_mat_table.rowCount()):
+            if self.p_mat_table.item(i, 4) is not None:
+                total += float(self.p_mat_table.item(i, 4).text())
+        self.p_cost.setText(str(total))
 
     def print_table_product(self):
         fil = self.search_product_save()
@@ -1240,6 +1266,7 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
     locale.setlocale(locale.LC_ALL, "en_US.utf8")
+    QtCore.QLocale.setDefault(QtCore.QLocale(QtCore.QLocale.English))
 
     mainWindow = AppMainWindow()
     mainWindow.show()
