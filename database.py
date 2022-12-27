@@ -46,7 +46,10 @@ class Database:
                 'count']
 
     def count_quantity_branch(self, table, bid, mid):
-        return self.connection.execute(f"select count(*) as count from {table} where b_id = ? and m_id = ?", (bid, mid)).fetchone()['count']
+        if table == "available_m":
+            return self.connection.execute(f"select count(*) as count from {table} where b_id = ? and m_id = ?", (bid, mid)).fetchone()['count']
+        else:
+            return self.connection.execute(f"select count(*) as count from {table} where b_id = ? and p_id = ?", (bid, mid)).fetchone()['count']
 
     def get_next_id(self, table):
         if self.connection.execute(f"select max(id)+1 as seq from {table}").fetchone()['seq'] == '':
@@ -120,8 +123,8 @@ class Database:
         self.connection.execute(f'delete from {table} where id = ?', (id, ))
         self.connection.commit()
 
-    def get_material_by_code(self, code) -> dict:
-        return self.connection.execute(f"select id, name, description, price, link from material where code = ?", (code, )).fetchone()
+    def get_all_by_code(self, table, code) -> dict:
+        return self.connection.execute(f"select * from {table} where code = ?", (code, )).fetchone()
 
     def get_material_product_by_code(self, code) -> list:
         code = f'%{code}%'
@@ -153,15 +156,19 @@ class Database:
             return self.connection.execute(sql_cmd).fetchall()
 
     def query_all_material_branch(self, table, filter: dict, limit1, limit2):
-        sql_cmd = f"SELECT id, b_id, m_id, quantity, place from {table}"
+        sql_cmd = f"SELECT * from {table}"
+
         if filter:
             sql_cmd += " where "
             filter_cmd = []
             if 'b_id' in filter:
-                filter_cmd.append(f'b_id =:b_id')
+                filter_cmd.append('b_id =:b_id')
             if 'm_code' in filter:
                 filter['m_code'] = f'%{filter["m_code"]}%'
-                filter_cmd.append(f'm_id in (select id from material where code like :m_code)')
+                if table == "available_m":
+                    filter_cmd.append('m_id in (select id from material where code like :m_code)')
+                else:
+                    filter_cmd.append('p_id in (select id from product where code like :m_code)')
 
             sql_cmd += ' and '.join(filter_cmd)
             sql_cmd += f' limit {limit1}, {limit2}'
