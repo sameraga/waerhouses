@@ -24,6 +24,7 @@ import database
 
 Form_Main, _ = uic.loadUiType('warehouses.ui')
 Form_Requests, _ = uic.loadUiType('requests.ui')
+Form_InternalImex, _ = uic.loadUiType('internal_imex.ui')
 PAGE_SIZE = 10
 USER = ''
 PASS = ''
@@ -256,7 +257,216 @@ class Requests(QtWidgets.QDialog, Form_Requests):
     def print_bill(self):
         pass
 
+class InternalImex(QtWidgets.QDialog, Form_InternalImex):
+    def __init__(self, id):
+        QtWidgets.QDialog.__init__(self)
+        Form_InternalImex.__init__(self)
+        self.setupUi(self)
 
+        self.validator_money = QtGui.QRegExpValidator(
+            QtCore.QRegExp('^(\$)?(([1-9]\d{0,2}(\,\d{3})*)|([1-9]\d*)|(0))(\.\d{1,2})?$'))
+
+        self.code = None
+        self.b_id = id
+        self.setup_control()
+
+    def setup_control(self):
+        self.b_date.setDate(QDate.currentDate())
+        self.branch_codes = database.db.query_csp("branches")
+        self.bill_type.addItem('')
+        self.sender_brunch.addItem('')
+        self.receiver_brunch.addItem('')
+        self.sender_brunch.addItems(self.branch_codes)
+        self.receiver_brunch.addItems(self.branch_codes)
+
+        self.internal_table: QtWidgets.QTableWidget
+        delegate = ReadOnlyDelegate(self.internal_table)
+        self.internal_table.setItemDelegateForColumn(1, delegate)
+        self.internal_table.setItemDelegateForColumn(4, delegate)
+        self.internal_table.setRowCount(1)
+        self.internal_table.keyReleaseEvent = self.table_key_press_event
+
+        self.fill_bill(self.b_id)
+
+        self.btn_save.clicked.connect(self.save_bill)
+        self.btn_cancel.clicked.connect(self.reject)
+        # self.btn_print_bill.clicked.connect(self.print_bill)
+
+        self.btn_save.setAutoDefault(False)
+        self.btn_cancel.setAutoDefault(False)
+        # self.btn_print_bill.setAutoDefault(False)
+
+    def fill_bill(self, id):
+        if id == 0:
+            self.b_id = database.db.get_next_id('internal_imex')
+            self.code = int(self.b_id) + 10000
+        else:
+            bill = database.db.query_row('internal_imex', id)
+            self.b_id = bill['id']
+            self.code = bill['code']
+            self.b_date.setDate(QDate(bill['date']))
+            self.bill_type.setCurrentText(bill['type'])
+            self.sender_brunch.setCurrentText(bill['sender'])
+            self.receiver_brunch.setCurrentText(bill['receiver'])
+            self.total.setText(str(bill['total']))
+
+        self.bill_code.setText(str(self.code))
+
+        orders = database.db.get_order_bill('int_order_v', self.b_id)
+        self.internal_table.setRowCount(len(orders) + 1)
+        for row_idx, row in enumerate(orders):
+            self.internal_table.setItem(row_idx, 0, QtWidgets.QTableWidgetItem(str(row['code'])))
+            self.internal_table.item(row_idx, 0).id = row['id']
+            self.internal_table.item(row_idx, 0).mid = row['m_id']
+            self.internal_table.setItem(row_idx, 1, QtWidgets.QTableWidgetItem(str(row['name'])))
+            self.internal_table.setItem(row_idx, 2, QtWidgets.QTableWidgetItem(str(row['quantity'])))
+            self.internal_table.setItem(row_idx, 3, QtWidgets.QTableWidgetItem(str(row['price'])))
+            self.internal_table.setItem(row_idx, 4, QtWidgets.QTableWidgetItem(str(row['total'])))
+            btn_delete = QtWidgets.QPushButton(QtGui.QIcon.fromTheme('delete'), '')
+            btn_delete.clicked.connect(lambda: self.delete_order(self.internal_table.currentRow()))
+            self.internal_table.setCellWidget(row_idx, 5, btn_delete)
+
+    def delete_order(self, current_row):
+        self.internal_table.removeRow(current_row)
+        self.calculate_total()
+
+    def table_key_press_event(self, event: QtGui.QKeyEvent):
+        self.internal_table: QtWidgets.QTableWidget
+        if event.key() == QtCore.Qt.Key_Return:
+            if self.internal_table.currentColumn() == 0 and self.internal_table.currentRow() + 1 == self.internal_table.rowCount():
+                self.update_table(self.internal_table.currentRow())
+                self.internal_table.setRowCount(self.internal_table.rowCount() + 1)
+            elif self.internal_table.currentColumn() == 0 and self.internal_table.currentRow() + 1 != self.internal_table.rowCount():
+                self.update_table(self.internal_table.currentRow())
+            else:
+                self.enter_event(self.internal_table.currentRow())
+
+    def update_table(self, current_row):
+        code = self.internal_table.item(current_row, 0).text()
+        material = database.db.get_material_by_code(code)
+        if self.bill_type.currentIndex() == 1:
+            self.receiver_brunch.setCurrentText = USER
+            if material:
+                for idx in range(self.internal_table.rowCount() - 1):
+                    if self.internal_table.item(idx, 0).text() == code:
+                        new = int(self.internal_table.item(idx, 2).text()) + 1
+                        self.internal_table.setItem(idx, 2, QtWidgets.QTableWidgetItem(str(new)))
+                        self.internal_table.setItem(current_row, 0, QtWidgets.QTableWidgetItem(''))
+                        self.delete_order(current_row)
+                        return
+
+                self.internal_table.item(current_row, 0).pid = material['id']
+                self.internal_table.setItem(current_row, 1, QtWidgets.QTableWidgetItem(material['name']))
+                self.internal_table.setItem(current_row, 2, QtWidgets.QTableWidgetItem('1'))
+                self.internal_table.setItem(current_row, 3, QtWidgets.QTableWidgetItem(str(material['price'])))
+                self.internal_table.setItem(current_row, 4, QtWidgets.QTableWidgetItem(str(material['price'])))
+                self.internal_table.setRowCount(self.internal_table.rowCount() + 1)
+                btn_delete = QtWidgets.QPushButton(QtGui.QIcon.fromTheme('delete'), '')
+                btn_delete.clicked.connect(lambda: self.delete_order(self.internal_table.currentRow()))
+                self.internal_table.setCellWidget(current_row, 5, btn_delete)
+                self.calculate_total()
+            else:
+                QtWidgets.QMessageBox.warning(None, 'خطأ', 'الرقم غير موجود\n أعد ادخال رقم صحيح')
+                self.internal_table.setItem(current_row, 0, QtWidgets.QTableWidgetItem(''))
+
+        else:
+            self.sender_brunch.setCurrentText = USER
+            if material:
+                if int(material['quantity']) >= 1:
+                    for idx in range(self.internal_table.rowCount() - 1):
+                        if self.internal_table.item(idx, 0).text() == code:
+                            new = int(self.internal_table.item(idx, 2).text()) + 1
+                            self.internal_table.setItem(idx, 2, QtWidgets.QTableWidgetItem(str(new)))
+                            self.internal_table.setItem(current_row, 0, QtWidgets.QTableWidgetItem(''))
+                            self.delete_order(current_row)
+                            return
+
+                    self.internal_table.item(current_row, 0).pid = material['id']
+                    self.internal_table.setItem(current_row, 1, QtWidgets.QTableWidgetItem(material['name']))
+                    self.internal_table.setItem(current_row, 2, QtWidgets.QTableWidgetItem('1'))
+                    self.internal_table.setItem(current_row, 3, QtWidgets.QTableWidgetItem(str(material['price'])))
+                    self.internal_table.setItem(current_row, 4, QtWidgets.QTableWidgetItem(str(material['price'])))
+                    self.internal_table.setRowCount(self.internal_table.rowCount() + 1)
+                    btn_delete = QtWidgets.QPushButton(QtGui.QIcon.fromTheme('delete'), '')
+                    btn_delete.clicked.connect(lambda: self.delete_order(self.internal_table.currentRow()))
+                    self.internal_table.setCellWidget(current_row, 5, btn_delete)
+                    self.calculate_total()
+                else:
+                    self.internal_table.setItem(current_row, 0, QtWidgets.QTableWidgetItem(''))
+                    QtWidgets.QMessageBox.warning(None, 'خطأ', 'غير متوفر\n لا يوجد لديك من هذه المادة')
+            else:
+                QtWidgets.QMessageBox.warning(None, 'خطأ', 'الرقم غير موجود\n أعد ادخال رقم صحيح')
+                self.internal_table.setItem(current_row, 0, QtWidgets.QTableWidgetItem(''))
+
+    def enter_event(self, current_row):
+        code = self.internal_table.item(current_row, 0).text()
+        material = database.db.get_material_by_code(code)
+        if self.internal_table.item(current_row, 4).text() == '':
+            self.internal_table.setItem(current_row, 4, QtWidgets.QTableWidgetItem('0'))
+
+        if self.internal_table.item(current_row, 2).text() == '':
+            self.internal_table.setItem(current_row, 2, QtWidgets.QTableWidgetItem('1'))
+        quantity = int(self.internal_table.item(current_row, 2).text())
+        if self.bill_type.currentIndex() == 2:
+            if quantity > int(material['quantity']):
+                quantity = int(material['quantity'])
+                self.internal_table.setItem(current_row, 2, QtWidgets.QTableWidgetItem(material['quantity']))
+                toaster_Notify.QToaster.show_message(parent=self,
+                                                     message=f"غير متوفر\n لقد بقي من هذه المادة {material['quantity']} قطعة فقط ")
+
+        total = quantity * float(self.internal_table.item(current_row, 3).text())
+        self.internal_table.setItem(current_row, 4, QtWidgets.QTableWidgetItem(str(total)))
+        self.calculate_total()
+
+    def calculate_total(self):
+        total = 0
+        for i in range(0, self.internal_table.rowCount()):
+            if self.internal_table.item(i, 4) is not None:
+                total += float(self.internal_table.item(i, 4).text())
+        self.total.setText(str(total))
+
+    def save_bill(self):
+        bill = dict()
+        bill['id'] = self.b_id
+        bill['code'] = self.bill_code.text()
+        bill['type'] = self.bill_type.text()
+        bill['sender'] = self.sender_brunch.text()
+        bill['receiver'] = self.receiver_brunch.text()
+        bill['date'] = QDate.toString(self.b_date.date())
+        bill['total'] = self.total.text()
+
+        orders = []
+        for idx in range(self.internal_table.rowCount()):
+            order = dict()
+            order['b_id'] = self.b_id
+            if self.internal_table.item(idx, 0) and self.internal_table.item(idx, 0).text():
+                if hasattr(self.internal_table.item(idx, 0), 'id'):
+                    order['id'] = self.internal_table.item(idx, 0).id
+                    order['m_id'] = self.internal_table.item(idx, 0).mid
+                else:
+                    order['id'] = int(database.db.get_next_id('int_order')) + idx
+                    order['m_id'] = database.db.get_id_by_code('material', self.internal_table.item(idx, 0).text())
+                if self.internal_table.item(idx, 2) and self.internal_table.item(idx, 2).text():
+                    order['quantity'] = self.internal_table.item(idx, 2).text()
+
+                if self.internal_table.item(idx, 3) and self.internal_table.item(idx, 3).text():
+                    order['price'] = self.internal_table.item(idx, 3).text()
+
+                if self.internal_table.item(idx, 4) and self.internal_table.item(idx, 4).text():
+                    order['total'] = self.internal_table.item(idx, 4).text()
+
+                orders.append(order)
+
+        if int(database.db.count_row("internal_imex", bill['code'])) == 0:
+            database.db.insert_row("internal_imex", bill)
+        else:
+            database.db.update_row("internal_imex", bill)
+
+        database.db.insert_table('int_order', orders, self.b_id)
+        self.accept()
+
+    def print_bill(self):
+        pass
 class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
     def __init__(self):
         QtWidgets.QMainWindow.__init__(self)
@@ -854,8 +1064,8 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
         self.p_table.clicked.connect(lambda mi: self.one_click_p(self.p_table.item(mi.row(), 0).id))
 
         # btn
-        self.btn_save_product.clicked.connect(self.add_new_product)
-        self.btn_add_new_product.clicked.connect(self.add_new_product)
+        # self.btn_save_product.clicked.connect(self.add_new_product)
+        # self.btn_add_new_product.clicked.connect(self.add_new_product)
         self.btn_clear_product.clicked.connect(self.clear_product_inputs)
         self.btn_delete_product.clicked.connect(self.delete_product)
         self.btn_edit_show_product.clicked.connect(self.edit_show_product)

@@ -71,6 +71,9 @@ class Database:
     def get_code_by_id(self, table, id):
         return self.connection.execute(f'select code from {table} where id = ?', (id,)).fetchone()['code']
 
+    def query_branches(self):
+        return {e['id']: e['code'] for e in self.connection.execute('select id, code from branches').fetchall()}
+
     #
     # def count_table(self, table, id):
     #     return self.connection.execute(f"SELECT count(*) as count FROM {table} where id = '{id}'").fetchone()['count']
