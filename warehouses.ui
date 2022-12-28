@@ -102,7 +102,7 @@
          </layout>
         </item>
         <item>
-         <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,9">
+         <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0">
           <item>
            <widget class="QListWidget" name="listWidget">
             <property name="sizePolicy">
@@ -1845,7 +1845,7 @@
               <item>
                <widget class="QTabWidget" name="tabWidget_3">
                 <property name="currentIndex">
-                 <number>0</number>
+                 <number>1</number>
                 </property>
                 <widget class="QWidget" name="tab_12">
                  <attribute name="title">
@@ -1879,7 +1879,7 @@
                         <rect>
                          <x>0</x>
                          <y>0</y>
-                         <width>239</width>
+                         <width>182</width>
                          <height>595</height>
                         </rect>
                        </property>
@@ -2151,7 +2151,14 @@
                           </property>
                          </widget>
                         </item>
-                        <item row="1" column="1">
+                        <item row="4" column="0" colspan="2">
+                         <widget class="QLineEdit" name="m_type">
+                          <property name="alignment">
+                           <set>Qt::AlignCenter</set>
+                          </property>
+                         </widget>
+                        </item>
+                        <item row="1" column="0" colspan="2">
                          <widget class="QLineEdit" name="m_code">
                           <property name="sizePolicy">
                            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -2159,26 +2166,6 @@
                             <verstretch>0</verstretch>
                            </sizepolicy>
                           </property>
-                          <property name="alignment">
-                           <set>Qt::AlignCenter</set>
-                          </property>
-                         </widget>
-                        </item>
-                        <item row="1" column="0">
-                         <widget class="QLineEdit" name="m_code_b">
-                          <property name="enabled">
-                           <bool>false</bool>
-                          </property>
-                          <property name="layoutDirection">
-                           <enum>Qt::RightToLeft</enum>
-                          </property>
-                          <property name="alignment">
-                           <set>Qt::AlignCenter</set>
-                          </property>
-                         </widget>
-                        </item>
-                        <item row="4" column="0" colspan="2">
-                         <widget class="QLineEdit" name="m_type">
                           <property name="alignment">
                            <set>Qt::AlignCenter</set>
                           </property>
@@ -2985,7 +2972,7 @@
               <item>
                <widget class="QTabWidget" name="tabWidget_2">
                 <property name="currentIndex">
-                 <number>0</number>
+                 <number>2</number>
                 </property>
                 <widget class="QWidget" name="tab_6">
                  <attribute name="title">
@@ -3367,19 +3354,6 @@
                         </property>
                        </widget>
                       </item>
-                      <item row="1" column="2">
-                       <widget class="QLineEdit" name="p_code_b">
-                        <property name="enabled">
-                         <bool>false</bool>
-                        </property>
-                        <property name="layoutDirection">
-                         <enum>Qt::RightToLeft</enum>
-                        </property>
-                        <property name="alignment">
-                         <set>Qt::AlignCenter</set>
-                        </property>
-                       </widget>
-                      </item>
                       <item row="2" column="1" colspan="2">
                        <widget class="QLineEdit" name="p_name">
                         <property name="alignment">
@@ -3501,13 +3475,6 @@
                   <item>
                    <layout class="QHBoxLayout" name="horizontalLayout_17">
                     <item>
-                     <widget class="QPushButton" name="btn_add_new_product">
-                      <property name="text">
-                       <string>اضافة منتج جديد</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
                      <widget class="QPushButton" name="btn_save_product">
                       <property name="text">
                        <string>حفظ وتعديل</string>
@@ -3554,7 +3521,7 @@
                        </widget>
                       </item>
                       <item row="1" column="1">
-                       <widget class="QComboBox" name="m_type_4">
+                       <widget class="QComboBox" name="p_b_code">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                           <horstretch>0</horstretch>
@@ -3583,7 +3550,7 @@
                        </widget>
                       </item>
                       <item row="2" column="1">
-                       <widget class="QLineEdit" name="m_name_3">
+                       <widget class="QLineEdit" name="p_b_name">
                         <property name="enabled">
                          <bool>false</bool>
                         </property>
@@ -3596,7 +3563,7 @@
                        </widget>
                       </item>
                       <item row="0" column="1">
-                       <widget class="QComboBox" name="m_type_5">
+                       <widget class="QComboBox" name="p_branches">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                           <horstretch>0</horstretch>
@@ -3644,7 +3611,7 @@
                        </widget>
                       </item>
                       <item row="4" column="1">
-                       <widget class="QLineEdit" name="m_name_5">
+                       <widget class="QLineEdit" name="p_place">
                         <property name="layoutDirection">
                          <enum>Qt::RightToLeft</enum>
                         </property>
@@ -3673,7 +3640,7 @@
                        </widget>
                       </item>
                       <item row="3" column="1">
-                       <widget class="QLineEdit" name="m_quantity_2">
+                       <widget class="QLineEdit" name="p_quantity">
                         <property name="text">
                          <string>0</string>
                         </property>
@@ -3705,7 +3672,7 @@
                       <item>
                        <layout class="QHBoxLayout" name="horizontalLayout_32" stretch="2,1,2">
                         <item>
-                         <widget class="QLineEdit" name="m_name_search_3">
+                         <widget class="QLineEdit" name="p_b_code_search">
                           <property name="alignment">
                            <set>Qt::AlignCenter</set>
                           </property>
@@ -3734,7 +3701,7 @@
                          </widget>
                         </item>
                         <item>
-                         <widget class="QComboBox" name="m_type_search_3">
+                         <widget class="QComboBox" name="p_branches_search">
                           <property name="layoutDirection">
                            <enum>Qt::LeftToRight</enum>
                           </property>
@@ -3758,7 +3725,7 @@
                        </layout>
                       </item>
                       <item>
-                       <widget class="QTableWidget" name="material_branch_table_2">
+                       <widget class="QTableWidget" name="product_branch_table">
                         <property name="layoutDirection">
                          <enum>Qt::RightToLeft</enum>
                         </property>
@@ -3781,27 +3748,27 @@
                         </column>
                         <column>
                          <property name="text">
-                          <string>الكود</string>
+                          <string>كود الفرع</string>
                          </property>
                         </column>
                         <column>
                          <property name="text">
-                          <string>الاسم</string>
+                          <string>كود المنتج</string>
                          </property>
                         </column>
                         <column>
                          <property name="text">
-                          <string>الوصف</string>
+                          <string>اسم المنتج</string>
                          </property>
                         </column>
                         <column>
                          <property name="text">
-                          <string>النوع</string>
+                          <string>الكمية</string>
                          </property>
                         </column>
                         <column>
                          <property name="text">
-                          <string>السعر</string>
+                          <string>المكان</string>
                          </property>
                         </column>
                        </widget>
@@ -3833,7 +3800,7 @@
                          </widget>
                         </item>
                         <item>
-                         <widget class="QSpinBox" name="material_branch_page_size_2">
+                         <widget class="QSpinBox" name="product_branch_page_size">
                           <property name="font">
                            <font>
                             <pointsize>12</pointsize>
@@ -3867,7 +3834,7 @@
                          </spacer>
                         </item>
                         <item>
-                         <widget class="QPushButton" name="material_branch_last_2">
+                         <widget class="QPushButton" name="product_branch_last">
                           <property name="text">
                            <string/>
                           </property>
@@ -3884,7 +3851,7 @@
                          </widget>
                         </item>
                         <item>
-                         <widget class="QPushButton" name="material_branch_post_2">
+                         <widget class="QPushButton" name="product_branch_post">
                           <property name="text">
                            <string/>
                           </property>
@@ -3901,7 +3868,7 @@
                          </widget>
                         </item>
                         <item>
-                         <widget class="QSpinBox" name="material_branch_page_num_2">
+                         <widget class="QSpinBox" name="product_branch_page_num">
                           <property name="font">
                            <font>
                             <pointsize>12</pointsize>
@@ -3922,7 +3889,7 @@
                          </widget>
                         </item>
                         <item>
-                         <widget class="QPushButton" name="material_branch_previous_2">
+                         <widget class="QPushButton" name="product_branch_previous">
                           <property name="text">
                            <string/>
                           </property>
@@ -3939,7 +3906,7 @@
                          </widget>
                         </item>
                         <item>
-                         <widget class="QPushButton" name="material_branch_first_2">
+                         <widget class="QPushButton" name="product_branch_first">
                           <property name="text">
                            <string/>
                           </property>
@@ -3964,42 +3931,42 @@
                   <item>
                    <layout class="QHBoxLayout" name="horizontalLayout_16">
                     <item>
-                     <widget class="QPushButton" name="btn_add_material_branch_2">
+                     <widget class="QPushButton" name="btn_add_product_branch">
                       <property name="text">
                        <string>اضافة</string>
                       </property>
                      </widget>
                     </item>
                     <item>
-                     <widget class="QPushButton" name="btn_edit_material_branch_2">
+                     <widget class="QPushButton" name="btn_edit_product_branch">
                       <property name="text">
                        <string>تعديل</string>
                       </property>
                      </widget>
                     </item>
                     <item>
-                     <widget class="QPushButton" name="btn_delete_material_branch_2">
+                     <widget class="QPushButton" name="btn_delete_product_branch">
                       <property name="text">
                        <string>حذف</string>
                       </property>
                      </widget>
                     </item>
                     <item>
-                     <widget class="QPushButton" name="btn_clear_material_branch_2">
+                     <widget class="QPushButton" name="btn_clear_product_branch">
                       <property name="text">
                        <string>مسح المدخلات</string>
                       </property>
                      </widget>
                     </item>
                     <item>
-                     <widget class="QPushButton" name="btn_print_table_material_branch_2">
+                     <widget class="QPushButton" name="btn_print_table_product_branch">
                       <property name="text">
                        <string>طباعة الجدول</string>
                       </property>
                      </widget>
                     </item>
                     <item>
-                     <widget class="QPushButton" name="btn_to_exel_material_branch_2">
+                     <widget class="QPushButton" name="btn_to_exel_product_branch">
                       <property name="text">
                        <string>تصدير الجدول</string>
                       </property>
@@ -4791,6 +4758,7 @@
   <include location="icons.qrc"/>
   <include location="icons.qrc"/>
   <include location="icons.qrc"/>
+  <include location="../../.designer/backup/icons.qrc"/>
  </resources>
  <connections>
   <connection>
