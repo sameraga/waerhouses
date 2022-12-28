@@ -2972,7 +2972,7 @@
               <item>
                <widget class="QTabWidget" name="tabWidget_2">
                 <property name="currentIndex">
-                 <number>2</number>
+                 <number>3</number>
                 </property>
                 <widget class="QWidget" name="tab_6">
                  <attribute name="title">
@@ -3302,16 +3302,6 @@
                         </property>
                        </widget>
                       </item>
-                      <item row="1" column="1">
-                       <widget class="QLineEdit" name="p_code">
-                        <property name="maxLength">
-                         <number>11</number>
-                        </property>
-                        <property name="alignment">
-                         <set>Qt::AlignCenter</set>
-                        </property>
-                       </widget>
-                      </item>
                       <item row="5" column="0">
                        <widget class="QLabel" name="label_34">
                         <property name="text">
@@ -3398,6 +3388,16 @@
                         </property>
                         <property name="text">
                          <string>صورة المنتج</string>
+                        </property>
+                        <property name="alignment">
+                         <set>Qt::AlignCenter</set>
+                        </property>
+                       </widget>
+                      </item>
+                      <item row="1" column="1" colspan="2">
+                       <widget class="QLineEdit" name="p_code">
+                        <property name="maxLength">
+                         <number>11</number>
                         </property>
                         <property name="alignment">
                          <set>Qt::AlignCenter</set>
@@ -3980,27 +3980,11 @@
                  <attribute name="title">
                   <string>تصنيع منتج</string>
                  </attribute>
-                 <widget class="QComboBox" name="m_type_6">
-                  <property name="geometry">
-                   <rect>
-                    <x>560</x>
-                    <y>60</y>
-                    <width>152</width>
-                    <height>37</height>
-                   </rect>
-                  </property>
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                 </widget>
                  <widget class="QLabel" name="label_51">
                   <property name="geometry">
                    <rect>
-                    <x>760</x>
-                    <y>60</y>
+                    <x>920</x>
+                    <y>10</y>
                     <width>76</width>
                     <height>37</height>
                    </rect>
@@ -4024,8 +4008,8 @@
                  <widget class="QLabel" name="label_55">
                   <property name="geometry">
                    <rect>
-                    <x>730</x>
-                    <y>140</y>
+                    <x>880</x>
+                    <y>50</y>
                     <width>141</width>
                     <height>37</height>
                    </rect>
@@ -4049,8 +4033,8 @@
                  <widget class="QLineEdit" name="m_quantity_3">
                   <property name="geometry">
                    <rect>
-                    <x>560</x>
-                    <y>140</y>
+                    <x>730</x>
+                    <y>50</y>
                     <width>152</width>
                     <height>37</height>
                    </rect>
@@ -4065,8 +4049,8 @@
                  <widget class="QWidget" name="layoutWidget_3">
                   <property name="geometry">
                    <rect>
-                    <x>0</x>
-                    <y>280</y>
+                    <x>20</x>
+                    <y>390</y>
                     <width>952</width>
                     <height>41</height>
                    </rect>
@@ -4087,6 +4071,145 @@
                     </widget>
                    </item>
                   </layout>
+                 </widget>
+                 <widget class="QWidget" name="layoutWidget">
+                  <property name="geometry">
+                   <rect>
+                    <x>742</x>
+                    <y>100</y>
+                    <width>241</width>
+                    <height>291</height>
+                   </rect>
+                  </property>
+                  <layout class="QGridLayout" name="gridLayout_10" rowstretch="1,0,0,0,0">
+                   <property name="sizeConstraint">
+                    <enum>QLayout::SetDefaultConstraint</enum>
+                   </property>
+                   <property name="leftMargin">
+                    <number>10</number>
+                   </property>
+                   <property name="horizontalSpacing">
+                    <number>6</number>
+                   </property>
+                   <property name="verticalSpacing">
+                    <number>10</number>
+                   </property>
+                   <item row="2" column="0">
+                    <widget class="QLabel" name="label_90">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="layoutDirection">
+                      <enum>Qt::RightToLeft</enum>
+                     </property>
+                     <property name="text">
+                      <string>توصيف</string>
+                     </property>
+                     <property name="alignment">
+                      <set>Qt::AlignCenter</set>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="4" column="0">
+                    <widget class="QLabel" name="label_62">
+                     <property name="text">
+                      <string>كلفة المواد الأولية</string>
+                     </property>
+                     <property name="alignment">
+                      <set>Qt::AlignCenter</set>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="2" column="1" colspan="2">
+                    <widget class="QLineEdit" name="p_description_2">
+                     <property name="alignment">
+                      <set>Qt::AlignCenter</set>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="4" column="1" colspan="2">
+                    <widget class="QLineEdit" name="p_cost_2">
+                     <property name="text">
+                      <string>0</string>
+                     </property>
+                     <property name="alignment">
+                      <set>Qt::AlignCenter</set>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="0" colspan="3">
+                    <widget class="QLabel" name="p_img_2">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="text">
+                      <string>صورة المنتج</string>
+                     </property>
+                     <property name="alignment">
+                      <set>Qt::AlignCenter</set>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="0">
+                    <widget class="QLabel" name="label_60">
+                     <property name="text">
+                      <string>الاسم</string>
+                     </property>
+                     <property name="alignment">
+                      <set>Qt::AlignCenter</set>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="1" colspan="2">
+                    <widget class="QLineEdit" name="p_name_2">
+                     <property name="alignment">
+                      <set>Qt::AlignCenter</set>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="3" column="0">
+                    <widget class="QLabel" name="label_58">
+                     <property name="text">
+                      <string>السعر</string>
+                     </property>
+                     <property name="alignment">
+                      <set>Qt::AlignCenter</set>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="3" column="1" colspan="2">
+                    <widget class="QLineEdit" name="p_price_2">
+                     <property name="text">
+                      <string>0</string>
+                     </property>
+                     <property name="alignment">
+                      <set>Qt::AlignCenter</set>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </widget>
+                 <widget class="QLineEdit" name="p_code_2">
+                  <property name="geometry">
+                   <rect>
+                    <x>730</x>
+                    <y>10</y>
+                    <width>145</width>
+                    <height>37</height>
+                   </rect>
+                  </property>
+                  <property name="maxLength">
+                   <number>11</number>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignCenter</set>
+                  </property>
                  </widget>
                 </widget>
                </widget>
@@ -4752,6 +4875,7 @@
   <tabstop>btn_cancel_pass</tabstop>
  </tabstops>
  <resources>
+  <include location="icons.qrc"/>
   <include location="icons.qrc"/>
   <include location="icons.qrc"/>
   <include location="icons.qrc"/>
