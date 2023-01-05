@@ -258,6 +258,7 @@ class Requests(QtWidgets.QDialog, Form_Requests):
     def print_bill(self):
         pass
 
+
 class InternalImex(QtWidgets.QDialog, Form_InternalImex):
     def __init__(self, id):
         QtWidgets.QDialog.__init__(self)
@@ -468,6 +469,8 @@ class InternalImex(QtWidgets.QDialog, Form_InternalImex):
 
     def print_bill(self):
         pass
+
+
 class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
     def __init__(self):
         QtWidgets.QMainWindow.__init__(self)
@@ -708,10 +711,7 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
         self.m_branches_search.addItem('')
         self.m_branches_search.addItems(self.branch_codes.values())
 
-        self.m_b_code.addItem('')
-        self.m_b_code.addItems(self.material_codes.values())
-
-        self.m_b_code.currentTextChanged.connect(lambda: self.code_change("material"))
+        self.m_b_code.returnPressed.connect(self.material_code_key_press_event)
 
         self._typing_timer_m_b.setSingleShot(True)
         self._typing_timer_m_b.timeout.connect(self.update_material_branch_table)
@@ -754,18 +754,6 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
 
         self.update_material_branch_table()
         self.clear_material_branch_inputs()
-
-    def code_change(self, table):
-        if table == "material":
-            if self.m_b_code.currentIndex() == 0:
-                self.m_b_name.clear()
-            else:
-                self.m_b_name.setText(database.db.get_all_by_code("material", self.m_b_code.currentText())['name'])
-        elif table == "product":
-            if self.p_b_code.currentIndex() == 0:
-                self.p_b_name.clear()
-            else:
-                self.p_b_name.setText(database.db.get_all_by_code("product", self.p_b_code.currentText())['name'])
 
     def save_material_info(self):
         global USER
@@ -932,10 +920,30 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
 
     # #### #### #### #### material_branch #### #### #### ####
 
+    def material_code_key_press_event(self):
+        mat_result = database.db.get_material_product_by_code("material", self.m_b_code.text())
+
+        if len(mat_result) == 0:
+            QtWidgets.QMessageBox.warning(None, 'خطأ', 'الرقم غير موجود\n أعد ادخال رقم صحيح')
+            return
+        elif len(mat_result) == 1:
+            material = mat_result[0]
+        else:
+            dlg = PrintDialog("material", self.m_b_code.text())
+            dlg.exec()
+            if dlg.result_value:
+                material = dlg.result_value
+            else:
+                QtWidgets.QMessageBox.warning(None, 'خطأ', 'الرقم غير موجود\n أعد ادخال رقم صحيح')
+                return
+
+        self.m_b_code.setText(material['code'])
+        self.m_b_name.setText(material['name'])
+
     def save_material_branch_info(self):
         material_branch = dict()
         material_branch['b_id'] = [k for k, v in self.branch_codes.items() if v == self.m_branches.currentText()][0]
-        material_branch['m_id'] = [k for k, v in self.material_codes.items() if v == self.m_b_code.currentText()][0]
+        material_branch['m_id'] = [k for k, v in self.material_codes.items() if v == self.m_b_code.text()][0]
         material_branch['quantity'] = self.m_quantity.text()
         material_branch['place'] = self.m_place.text()
 
@@ -1008,7 +1016,7 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
 
     def clear_material_branch_inputs(self):
         self.m_branches.setCurrentIndex(0)
-        self.m_b_code.setCurrentIndex(0)
+        self.m_b_code.clear()
         self.m_b_code.setEnabled(True)
         self.m_b_name.clear()
         self.m_quantity.setText('0')
@@ -1029,7 +1037,7 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
             QtWidgets.QMessageBox.warning(None, 'خطأ', 'لا يمكن تعديل تواجد المادة لفرع آخر')
             return
 
-        self.m_b_code.setCurrentText(self.material_codes[material_branch['m_id']])
+        self.m_b_code.setText(self.material_codes[material_branch['m_id']])
         self.m_b_code.setEnabled(False)
         self.m_b_name.setText(database.db.get_all_by_code("material", self.material_codes[material_branch['m_id']])['name'])
         self.m_quantity.setText(material_branch['quantity'])
@@ -1094,7 +1102,11 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
 
         self.p_mat_table.keyReleaseEvent = self.table_key_press_event
 
+        self.update_product_table()
+        self.clear_product_inputs()
+
         # ###############################################################
+        # product_available
 
         self.p_quantity.setValidator(self.validator_int)
         self.p_b_code_search.setValidator(self.validator_code)
@@ -1112,10 +1124,7 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
         self.p_branches_search.addItem('')
         self.p_branches_search.addItems(self.branch_codes.values())
 
-        self.p_b_code.addItem('')
-        self.p_b_code.addItems(self.product_codes.values())
-
-        self.p_b_code.currentTextChanged.connect(lambda: self.code_change("product"))
+        self.p_b_code.returnPressed.connect(self.product_code_key_press_event)
 
         self._typing_timer_p_b.setSingleShot(True)
         self._typing_timer_p_b.timeout.connect(self.update_product_branch_table)
@@ -1147,11 +1156,19 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
         self.product_branch_last.clicked.connect(lambda: self.product_branch_page_num.setValue(math.ceil(int(database.db.count_row("available_p", 1)) / self.product_branch_page_size.value())))
         self.product_branch_first.clicked.connect(lambda: self.product_branch_page_num.setValue(1))
 
-        self.update_product_table()
-        self.clear_product_inputs()
-
         self.update_product_branch_table()
         self.clear_product_branch_inputs()
+
+        # ###############################################################
+        # product_manufacturing
+        self.p_code_manufact.setValidator(self.validator_code)
+        self.p_code_manufact.returnPressed.connect(self.manufact_key_press_event)
+
+        self.quantity_manufact.setValidator(self.validator_int)
+        self.quantity_manufact.textChanged.connect(self.manufact_change_quantity)
+
+        self.btn_manufact.clicked.connect(self.manufact_new_product)
+        self.btn_clear_manufact.clicked.connect(self.clear_product_manufact)
 
     def search_product_save(self):
         fil = {}
@@ -1195,6 +1212,7 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
             database.db.insert_row("product", product)
         else:
             database.db.update_row("product", product)
+
         database.db.insert_table('product_material', orders, self.product_id)
 
         self.update_product_table()
@@ -1217,10 +1235,10 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
             self.p_table.item(row_idx, 2).setTextAlignment(QtCore.Qt.AlignCenter)
             self.p_table.setItem(row_idx, 3, QtWidgets.QTableWidgetItem(row['description']))
             self.p_table.item(row_idx, 3).setTextAlignment(QtCore.Qt.AlignCenter)
-            self.p_table.setItem(row_idx, 5, QtWidgets.QTableWidgetItem(row['price']))
+            self.p_table.setItem(row_idx, 4, QtWidgets.QTableWidgetItem(row['price']))
+            self.p_table.item(row_idx, 4).setTextAlignment(QtCore.Qt.AlignCenter)
+            self.p_table.setItem(row_idx, 5, QtWidgets.QTableWidgetItem(row['cost']))
             self.p_table.item(row_idx, 5).setTextAlignment(QtCore.Qt.AlignCenter)
-            self.p_table.setItem(row_idx, 6, QtWidgets.QTableWidgetItem(row['cost']))
-            self.p_table.item(row_idx, 6).setTextAlignment(QtCore.Qt.AlignCenter)
         self.p_table.resizeColumnsToContents()
 
     def table_key_press_event(self, event: QtGui.QKeyEvent):
@@ -1232,19 +1250,20 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
             elif self.p_mat_table.currentColumn() == 0 and self.p_mat_table.currentRow() + 1 != self.p_mat_table.rowCount():
                 self.update_product_material_table(self.p_mat_table.currentRow())
             else:
-                self.enter_event(self.p_mat_table.currentRow())
+                self.enter_event_product_material_table(self.p_mat_table.currentRow())
 
     def update_product_material_table(self, current_row):
         code = self.p_mat_table.item(current_row, 0).text()
-        material = dict()
-        if len(database.db.get_material_product_by_code(code)) == 0:
+        material: dict[str,str]
+        mat_result = database.db.get_material_product_by_code("material", code)
+        if len(mat_result) == 0:
             QtWidgets.QMessageBox.warning(None, 'خطأ', 'الرقم غير موجود\n أعد ادخال رقم صحيح')
             self.delete_order_product(current_row)
             return
-        elif len(database.db.get_material_product_by_code(code)) == 1:
-            material = database.db.get_material_product_by_code(code)[0]
+        elif len(mat_result) == 1:
+            material = mat_result[0]
         else:
-            dlg = PrintDialog(code)
+            dlg = PrintDialog("material", code)
             dlg.exec()
             if dlg.result_value:
                 material = dlg.result_value
@@ -1257,9 +1276,9 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
             if self.p_mat_table.item(idx, 0).text() == material['code'] and current_row != idx:
                 new = int(self.p_mat_table.item(idx, 2).text()) + 1
                 self.p_mat_table.setItem(idx, 2, QtWidgets.QTableWidgetItem(str(new)))
-                total = new * float(self.p_mat_table.item(current_row, 3).text())
+                total = new * float(self.p_mat_table.item(idx, 3).text())
                 total = round(total, 2)
-                self.p_mat_table.setItem(current_row, 4, QtWidgets.QTableWidgetItem(str(total)))
+                self.p_mat_table.setItem(idx, 4, QtWidgets.QTableWidgetItem(str(total)))
                 self.delete_order_product(current_row)
                 self.calculate_total_product()
                 return
@@ -1278,7 +1297,7 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
         self.p_mat_table.setCellWidget(current_row, 5, btn_delete)
         self.calculate_total_product()
 
-    def enter_event(self, current_row):
+    def enter_event_product_material_table(self, current_row):
         if self.p_mat_table.item(current_row, 2).text() == '':
             self.p_mat_table.setItem(current_row, 2, QtWidgets.QTableWidgetItem('1'))
 
@@ -1288,44 +1307,6 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
         total = round(total, 2)
         self.p_mat_table.setItem(current_row, 4, QtWidgets.QTableWidgetItem(str(total)))
         self.calculate_total_product()
-
-    # def create_new_product(self):
-    #     product = self.save_product_info()
-    #     if product['code'] and product['name']:
-    #         if int(database.db.count_row("product", product['code'])) == 0:
-    #             database.db.insert_row("product", product)
-    #             toaster_Notify.QToaster.show_message(parent=self,
-    #                                                  message=f"إضافة المنتج\nتم إضافة المنتج {product['name']} بنجاح")
-    #             self.tabWidget_2.setCurrentIndex(0)
-    #             self.update_product_table()
-    #             self.clear_product_inputs()
-    #         else:
-    #             QtWidgets.QMessageBox.warning(None, 'خطأ', 'إن الكود مكرر')
-    #     else:
-    #         QtWidgets.QMessageBox.warning(None, 'خطأ', 'يجب أن تدخل الكود واسم المنتج')
-
-    # def update_product(self):
-    #     product = self.save_product_info()
-    #     product['id'] = self.product_id
-    #     if product['code'] and product['name']:
-    #         if product['code'] == self.product_co:
-    #             database.db.update_row("product", product)
-    #             self.tabWidget_2.setCurrentIndex(0)
-    #             self.update_product_table()
-    #             self.clear_product_inputs()
-    #             toaster_Notify.QToaster.show_message(parent=self,
-    #                                                  message=f"تعديل منتج\nتم تعديل المنتج {product['name']} بنجاح")
-    #         elif int(database.db.count_row("product", product['code'])) == 0:
-    #             database.db.update_row("product", product)
-    #             self.tabWidget_2.setCurrentIndex(0)
-    #             self.update_product_table()
-    #             self.clear_product_inputs()
-    #             toaster_Notify.QToaster.show_message(parent=self,
-    #                                                  message=f"تعديل منتج\nتم تعديل المنتج {product['name']} بنجاح")
-    #         else:
-    #             QtWidgets.QMessageBox.warning(None, 'خطأ', 'إن الكود مكرر')
-    #     else:
-    #         QtWidgets.QMessageBox.warning(None, 'خطأ', 'يجب أن تدخل الكود واسم المنتج')
 
     def clear_product_inputs(self):
         self.product_id = 0
@@ -1359,17 +1340,17 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
         self.fill_product_info(self.product_id)
 
     def one_click_p(self, id):
+        self.clear_product_inputs()
         self.product_id = id
         self.btn_edit_show_product.setEnabled(True)
         self.btn_delete_product.setEnabled(True)
 
     def double_click(self, id):
+        self.clear_product_inputs()
         self.product_id = id
         self.edit_show_product()
 
     def fill_product_info(self, id):
-        self.clear_product_inputs()
-
         product = database.db.query_row('product', id)
 
         self.p_code.setText(product['code'])
@@ -1422,10 +1403,29 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
 
     # #### #### #### #### product_branch #### #### #### ####
 
+    def product_code_key_press_event(self):
+        pro_result = database.db.get_material_product_by_code("product", self.p_b_code.text())
+        if len(pro_result) == 0:
+            QtWidgets.QMessageBox.warning(None, 'خطأ', 'الرقم غير موجود\n أعد ادخال رقم صحيح')
+            return
+        elif len(pro_result) == 1:
+            product = pro_result[0]
+        else:
+            dlg = PrintDialog("product", self.p_b_code.text())
+            dlg.exec()
+            if dlg.result_value:
+                product = dlg.result_value
+            else:
+                QtWidgets.QMessageBox.warning(None, 'خطأ', 'الرقم غير موجود\n أعد ادخال رقم صحيح')
+                return
+
+        self.p_b_code.setText(product['code'])
+        self.p_b_name.setText(product['name'])
+
     def save_product_branch_info(self):
         product_branch = dict()
         product_branch['b_id'] = [k for k, v in self.branch_codes.items() if v == self.p_branches.currentText()][0]
-        product_branch['p_id'] = [k for k, v in self.product_codes.items() if v == self.p_b_code.currentText()][0]
+        product_branch['p_id'] = [k for k, v in self.product_codes.items() if v == self.p_b_code.text()][0]
         product_branch['quantity'] = self.p_quantity.text()
         product_branch['place'] = self.p_place.text()
 
@@ -1476,7 +1476,6 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
     def update_product_branch_table(self):
         fil = self.search_product_branch_save()
         rows = database.db.query_all_material_branch("available_p", fil, self.material_branch_page_size.value() * (self.material_branch_page_num.value() - 1), self.material_branch_page_size.value())
-        print(rows)
         self.product_branch_table.setRowCount(len(rows))
         for row_idx, row in enumerate(rows):
             self.product_branch_table.setItem(row_idx, 0, QtWidgets.QTableWidgetItem(
@@ -1498,7 +1497,7 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
 
     def clear_product_branch_inputs(self):
         self.p_branches.setCurrentIndex(0)
-        self.p_b_code.setCurrentIndex(0)
+        self.p_b_code.clear()
         self.p_b_code.setEnabled(True)
         self.p_b_name.clear()
         self.p_quantity.setText('0')
@@ -1519,7 +1518,7 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
             QtWidgets.QMessageBox.warning(None, 'خطأ', 'لا يمكن تعديل تواجد المنتج لفرع آخر')
             return
 
-        self.p_b_code.setCurrentText(self.product_codes[product_branch['p_id']])
+        self.p_b_code.setText(self.product_codes[product_branch['p_id']])
         self.p_b_code.setEnabled(False)
         self.p_b_name.setText(database.db.get_all_by_code("product", self.product_codes[product_branch['p_id']])['name'])
         self.p_quantity.setText(product_branch['quantity'])
@@ -1531,6 +1530,127 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
 
     def print_table_product_branch(self):
         pass
+
+    # #### #### #### #### product_manufact #### #### #### ####
+
+    def manufact_key_press_event(self):
+        code = self.p_code_manufact.text()
+        product: dict
+        product_result = database.db.get_material_product_by_code("product", code)
+        if len(product_result) == 0:
+            QtWidgets.QMessageBox.warning(None, 'خطأ', 'الرقم غير موجود\n أعد ادخال رقم صحيح')
+            self.clear_product_manufact()
+            return
+        elif len(product_result) == 1:
+            product = product_result[0]
+        else:
+            dlg = PrintDialog("product", code)
+            dlg.exec()
+            if dlg.result_value:
+                product = dlg.result_value
+            else:
+                QtWidgets.QMessageBox.warning(None, 'خطأ', 'الرقم غير موجود\n أعد ادخال رقم صحيح')
+                self.clear_product_manufact()
+                return
+
+        self.quantity_manufact.setEnabled(True)
+        self.quantity_manufact.setText('1')
+        manufact = True
+
+        self.p_code_manufact.setText(product['code'])
+        self.p_name_manufact.setText(product['name'])
+        self.p_description_manufact.setText(product['description'])
+        self.p_price_manufact.setText(product['price'])
+        self.p_cost_manufact.setText(product['cost'])
+        self.p_price_manufact_2.setText(product['price'])
+        self.p_cost_manufact_2.setText(product['cost'])
+
+        orders = database.db.get_product_material('pro_mat_v', product['id'])
+        self.p_mat_table_manufact.setRowCount(len(orders))
+        for row_idx, row in enumerate(orders):
+            self.p_mat_table_manufact.setItem(row_idx, 0, QtWidgets.QTableWidgetItem(str(row['code'])))
+            self.p_mat_table_manufact.item(row_idx, 0).id = row['id']
+            self.p_mat_table_manufact.item(row_idx, 0).mid = row['m_id']
+            self.p_mat_table_manufact.setItem(row_idx, 1, QtWidgets.QTableWidgetItem(str(row['name'])))
+            self.p_mat_table_manufact.setItem(row_idx, 2, QtWidgets.QTableWidgetItem(str(row['quantity'])))
+            self.p_mat_table_manufact.setItem(row_idx, 3, QtWidgets.QTableWidgetItem(str(row['price'])))
+            total = int(row['quantity']) * float(row['price'])
+            total = round(total, 2)
+            self.p_mat_table_manufact.setItem(row_idx, 4, QtWidgets.QTableWidgetItem(str(total)))
+            self.p_mat_table_manufact.setItem(row_idx, 5, QtWidgets.QTableWidgetItem(str(row['quantity'])))
+            self.p_mat_table_manufact.setItem(row_idx, 6, QtWidgets.QTableWidgetItem(str(total)))
+            qu = database.db.get_id_by_mid("available_m", row['m_id'], self.branch_id)
+            if qu:
+                if qu['quantity'] != '0':
+                    if int(qu['quantity']) >= int(row['quantity']):
+                        quantity = int(qu['quantity']) - int(row['quantity'])
+                        self.p_mat_table_manufact.setItem(row_idx, 7, QtWidgets.QTableWidgetItem(str(quantity)))
+                    else:
+                        self.p_mat_table_manufact.setItem(row_idx, 7, QtWidgets.QTableWidgetItem("الكمية الموجودة لا تكفي"))
+                        manufact = False
+                else:
+                    self.p_mat_table_manufact.setItem(row_idx, 7, QtWidgets.QTableWidgetItem("لا توجد هذه المادة في المستودع"))
+                    manufact = False
+            else:
+                self.p_mat_table_manufact.setItem(row_idx, 7, QtWidgets.QTableWidgetItem("لا توجد هذه المادة في المستودع"))
+                manufact = False
+
+        self.btn_manufact.setEnabled(manufact)
+
+    def manufact_change_quantity(self):
+        if self.quantity_manufact.text() == '':
+            product_quantity = 1
+        else:
+            product_quantity = int(self.quantity_manufact.text())
+        manufact = True
+        price = float(self.p_price_manufact.text())
+        price = round(price, 2)
+        cost = float(self.p_price_manufact.text())
+        cost = round(cost, 2)
+        self.p_price_manufact_2.setText(str(price * product_quantity))
+        self.p_cost_manufact_2.setText(str(cost * product_quantity))
+
+        for row_idx in range(self.p_mat_table_manufact.rowCount()):
+            quantity = int(self.p_mat_table_manufact.item(row_idx, 2).text()) * product_quantity
+            self.p_mat_table_manufact.setItem(row_idx, 5, QtWidgets.QTableWidgetItem(str(quantity)))
+            qu = database.db.get_id_by_mid("available_m", self.p_mat_table_manufact.item(row_idx, 0).mid, self.branch_id)
+            if qu:
+                if qu['quantity'] != '0':
+                    if int(qu['quantity']) >= quantity:
+                        self.p_mat_table_manufact.setItem(row_idx, 7, QtWidgets.QTableWidgetItem(str(int(qu['quantity']) - quantity)))
+                    else:
+                        self.p_mat_table_manufact.setItem(row_idx, 7, QtWidgets.QTableWidgetItem("الكمية الموجودة لا تكفي"))
+                        manufact = False
+                else:
+                    self.p_mat_table_manufact.setItem(row_idx, 7, QtWidgets.QTableWidgetItem("لا توجد هذه المادة في المستودع"))
+                    manufact = False
+            else:
+                self.p_mat_table_manufact.setItem(row_idx, 7, QtWidgets.QTableWidgetItem("لا توجد هذه المادة في المستودع"))
+                manufact = False
+            total = float(self.p_mat_table_manufact.item(row_idx, 3).text()) * float(self.p_mat_table_manufact.item(row_idx, 5).text())
+            total = round(total, 2)
+            self.p_mat_table_manufact.setItem(row_idx, 6, QtWidgets.QTableWidgetItem(str(total)))
+
+        self.btn_manufact.setEnabled(manufact)
+
+    def manufact_new_product(self):
+        pass
+
+    def clear_product_manufact(self):
+        self.p_code_manufact.clear()
+        self.quantity_manufact.setText('1')
+        self.p_name_manufact.clear()
+        self.p_description_manufact.clear()
+        self.p_price_manufact.setText('0')
+        self.p_cost_manufact.setText('0')
+
+        self.p_price_manufact_2.setText('0')
+        self.p_cost_manufact_2.setText('0')
+
+        self.p_mat_table_manufact.clearContents()
+        self.p_mat_table_manufact.setRowCount(0)
+
+        self.btn_manufact.setEnabled(False)
 
     # ###################################################################################
     # requests methods

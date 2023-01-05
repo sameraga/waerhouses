@@ -68,8 +68,8 @@ class Database:
     def get_id_by_code(self, table, code):
         return self.connection.execute(f"select id from {table} where code = ?", (code, )).fetchone()['id']
 
-    def get_id_by_mid(self, table, mid, bid):
-        return self.connection.execute(f"select id from {table} where m_id = ? and branch_id = ?", (mid, bid)).fetchone()['id']
+    def get_id_by_mid(self, table, mid, bid) -> dict:
+        return self.connection.execute(f"select * from {table} where m_id = ? and b_id = ?", (mid, bid)).fetchone()
 
     def get_code_by_id(self, table, id):
         return self.connection.execute(f'select code from {table} where id = ?', (id, )).fetchone()['code']
@@ -126,9 +126,9 @@ class Database:
     def get_all_by_code(self, table, code) -> dict:
         return self.connection.execute(f"select * from {table} where code = ?", (code, )).fetchone()
 
-    def get_material_product_by_code(self, code) -> list:
+    def get_material_product_by_code(self, table, code) -> list:
         code = f'%{code}%'
-        return self.connection.execute("select id, code, name, price from material where code like ?", (code, )).fetchall()
+        return self.connection.execute(f"select * from {table} where code like ?", (code, )).fetchall()
 
     def query_all_material(self, filter: dict, limit1, limit2):
         sql_cmd = "SELECT id, code, name, description, type, price from material"
