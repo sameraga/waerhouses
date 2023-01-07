@@ -214,7 +214,7 @@
              <enum>QTabWidget::Rounded</enum>
             </property>
             <property name="currentIndex">
-             <number>6</number>
+             <number>5</number>
             </property>
             <widget class="QWidget" name="tab_1">
              <property name="layoutDirection">
@@ -1842,7 +1842,7 @@
               <item>
                <widget class="QTabWidget" name="tabWidget_3">
                 <property name="currentIndex">
-                 <number>0</number>
+                 <number>1</number>
                 </property>
                 <widget class="QWidget" name="tab_12">
                  <attribute name="title">
@@ -2972,7 +2972,7 @@
               <item>
                <widget class="QTabWidget" name="tabWidget_2">
                 <property name="currentIndex">
-                 <number>3</number>
+                 <number>2</number>
                 </property>
                 <widget class="QWidget" name="tab_6">
                  <attribute name="title">
@@ -3703,21 +3703,6 @@
                           <property name="layoutDirection">
                            <enum>Qt::LeftToRight</enum>
                           </property>
-                          <item>
-                           <property name="text">
-                            <string/>
-                           </property>
-                          </item>
-                          <item>
-                           <property name="text">
-                            <string>1</string>
-                           </property>
-                          </item>
-                          <item>
-                           <property name="text">
-                            <string>2</string>
-                           </property>
-                          </item>
                          </widget>
                         </item>
                        </layout>
@@ -4958,7 +4943,8 @@
   <include location="icons.qrc"/>
   <include location="icons.qrc"/>
   <include location="icons.qrc"/>
-  <include location="../../.designer/backup/icons.qrc"/>
+  <include location="icons.qrc"/>
+  <include location="icons.qrc"/>
  </resources>
  <connections>
   <connection>

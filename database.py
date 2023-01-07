@@ -180,6 +180,13 @@ class Database:
     # product
     # ###############################################################
 
+    def update_product_quantity(self, table, row) -> None:
+        if table == "available_p":
+            self.connection.execute(f"UPDATE {table} SET quantity = quantity + ? WHERE b_id = ? and p_id = ?", (row['quantity'], row['b_id'], row['p_id']))
+        else:
+            self.connection.execute(f"UPDATE {table} SET quantity = quantity - ? WHERE b_id = ? and m_id = ?", (row['quantity'], row['b_id'], row['m_id']))
+        self.connection.commit()
+
     def query_all_product(self, filter1: dict, limit1, limit2):
         sql_cmd = "SELECT id, code, name, description, price, cost from product"
 

@@ -5,21 +5,27 @@ import json
 import locale
 import math
 import os
+import shutil
 import sys
 import tempfile
 import time
 from uuid6 import uuid8
+from shutil import copy2
+
 import PyQt5.QtCore as QtCore
 import PyQt5.QtGui as QtGui
 import PyQt5.QtWidgets as QtWidgets
+import PyQt5.uic as uic
+
 from jinja2 import Template
 import xlwt
-import PyQt5.uic as uic
 import hashlib
+
 import toaster_Notify
 from QDate import QDate
-
+from QImageSelect import QImageSelect
 import aes
+import assets
 import database
 from dlg_choice_code import PrintDialog
 
@@ -487,6 +493,9 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
         self.branch_id = 0
         self.branch_codes = None
 
+        self.m_img.attach = None
+        self.m_img.asset = None
+
         self._typing_timer_m = QtCore.QTimer()
         self.material_id = 0
         self.material_co = 0
@@ -659,6 +668,8 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
         self.m_less_quantity.setValidator(self.validator_int)
         self.m_price.setValidator(self.validator_money)
 
+        self.m_img.mousePressEvent = lambda *args, **kwargs: self.pick_image(self.m_img)
+
         self._typing_timer_m.setSingleShot(True)
         self._typing_timer_m.timeout.connect(self.update_material_table)
 
@@ -772,6 +783,8 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
         material['link'] = self.m_link.text()
         material['note'] = self.m_note.toPlainText()
 
+        material['pic'] = self.m_img.asset
+
         return material
 
     def create_new_material(self):
@@ -780,6 +793,8 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
         material['id'] = str(uuid8())
         if material['code'] and material['name']:
             if int(database.db.count_row("material", material['code'])) == 0:
+                if self.m_img.attach:
+                    material['pic'] = assets.create_asset(material['id'], self.m_img.attach, self.config['password'])
                 database.db.insert_row("material", material)
                 toaster_Notify.QToaster.show_message(parent=self, message=f"إضافة مادة\nتم إضافة المادة {material['name']} بنجاح")
                 self.update_material_table()
@@ -794,12 +809,24 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
         material['id'] = self.material_id
         if material['code'] and material['name']:
             if material['code'] == self.material_co:
+                if self.m_img.attach:
+                    if self.m_img.asset:
+                        assets.asset_delete(material['id'], self.m_img.asset)
+                    material['pic'] = assets.create_asset(material['id'], self.m_img.attach, self.config['password'])
+                else:
+                    material['pic'] = self.m_img.asset
                 database.db.update_row("material", material)
                 self.update_material_table()
                 self.clear_material_inputs()
                 toaster_Notify.QToaster.show_message(parent=self,
                                                      message=f"تعديل مادة\nتم تعديل المادة {material['name']} بنجاح")
             elif int(database.db.count_row("material", material['code'])) == 0:
+                if self.m_img.attach:
+                    if self.m_img.asset:
+                        assets.asset_delete(material['id'], self.m_img.asset)
+                    material['pic'] = assets.create_asset(material['id'], self.m_img.attach, self.config['password'])
+                else:
+                    material['pic'] = self.m_img.asset
                 database.db.update_row("material", material)
                 self.update_material_table()
                 self.clear_material_inputs()
@@ -818,6 +845,10 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
                                     msg.No)
         if button_reply == msg.Yes:
             database.db.delete_row("material", self.material_id)
+            try:
+                shutil.rmtree(f"assets/{self.material_id}")
+            except OSError as e:
+                print("Error: %s - %s." % (e.filename, e.strerror))
             self.update_material_table()
             self.clear_material_inputs()
             toaster_Notify.QToaster.show_message(parent=self, message=f"حذف مادة\nتم حذف المادة{material['name']} بنجاح")
@@ -872,6 +903,11 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
         self.m_source.clear()
         self.m_note.clear()
 
+        pixmap = QtGui.QPixmap("icons/empty.png")
+        self.m_img.setPixmap(pixmap.scaled(self.m_img.size(), QtCore.Qt.KeepAspectRatio))
+        self.m_img.attach = None
+        self.m_img.asset = None
+
         self.btn_edit_material.setEnabled(False)
         self.btn_delete_material.setEnabled(False)
         self.btn_add_material.setEnabled(True)
@@ -902,6 +938,14 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
             self.m_link.setText(material['link'])
             self.m_note.setText(material['note'])
 
+            self.m_img.asset = material['pic']
+            if material['pic']:
+                pixmap = QtGui.QPixmap(assets.decrypt_asset(self.material_id, material['pic'], self.config['password']))
+            else:
+                pixmap = QtGui.QPixmap("icons/empty.png")
+
+            self.m_img.setPixmap(pixmap.scaled(self.m_img.size(), QtCore.Qt.KeepAspectRatio))
+
     def print_table_material(self):
         fil = self.search_material_save()
         materials = database.db.query_all_material(fil, 0, database.db.count_row("material", 1))
@@ -917,6 +961,46 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
             fp.write(html)
             fp.close()
             os.system('setsid firefox ' + fp.name + ' &')
+
+    def pick_image(self, label: QtWidgets.QLabel):
+        msg = QtWidgets.QMessageBox()
+        msg.setIcon(QtWidgets.QMessageBox.Information)
+        msg.setLayoutDirection(QtCore.Qt.RightToLeft)
+        msg.setText('هل تريد عرض الصورة الشخصية ام اختيار صورة جديدة ؟')
+        btn_export = msg.addButton('تصدير الصورة', QtWidgets.QMessageBox.AcceptRole)
+        btn_show = msg.addButton('عرض الصورة', QtWidgets.QMessageBox.AcceptRole)
+        btn_new = msg.addButton('اختيار صورة جديدة', QtWidgets.QMessageBox.AcceptRole)
+        msg.addButton('الغاء', QtWidgets.QMessageBox.RejectRole)
+        msg.exec_()
+        # new entry
+        if msg.clickedButton() == btn_new:
+            opt = QtWidgets.QFileDialog.Options()
+            opt |= QtWidgets.QFileDialog.DontUseNativeDialog
+            ext = 'Image files(*.jpg *.jpeg *.png *.bmp);;All file types(*.*)'
+            file, _ = QtWidgets.QFileDialog.getOpenFileName(self, caption="اختيار صورة", filter=ext, options=opt)
+            if file:
+                pixmap = QImageSelect.spawn(title="select image", image=file, maximum_size=QtCore.QSize(600, 400))
+                if pixmap:
+                    label.clear()
+                    pixmap.save(f"/tmp/prisons/{os.path.basename(file)}", "PNG")
+                    label.attach = f"/tmp/prisons/{os.path.basename(file)}"
+                    label.setPixmap(pixmap.scaled(label.size(), QtCore.Qt.KeepAspectRatio))
+        elif msg.clickedButton() == btn_show:
+            if label.asset:
+                os.system('xdg-open "' + assets.decrypt_asset(self.material_id, label.asset, self.config['password']) + '"')
+            else:
+                QtWidgets.QMessageBox.warning(None, 'خطأ', 'لا يوجد صورة لعرضها')
+        elif msg.clickedButton() == btn_export:
+            if label.asset:
+                path = QtWidgets.QFileDialog.getExistingDirectory(self, "Select Directory")
+                if path:
+                    asset_path = assets.decrypt_asset(self.material_id, label.asset, self.config['password'])
+                    stern = os.path.basename(assets.get_asset_path(self.material_id, label.asset))
+                    stern = stern[:len(stern) - 16]
+                    copy2(asset_path, path + "/" + stern)
+                    os.remove(asset_path)
+            else:
+                QtWidgets.QMessageBox.warning(None, 'خطأ', 'لا يوجد صورة لتصديرها')
 
     # #### #### #### #### material_branch #### #### #### ####
 
@@ -1634,7 +1718,26 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
         self.btn_manufact.setEnabled(manufact)
 
     def manufact_new_product(self):
-        pass
+        product = dict()
+        product['p_id'] = [k for k, v in self.product_codes.items() if v == self.p_code_manufact.text()][0]
+        product['quantity'] = self.quantity_manufact.text()
+        product['b_id'] = self.branch_id
+        if int(database.db.count_quantity_branch("available_p", product['b_id'], product['p_id'])) == 0:
+            product['id'] = str(uuid8())
+            database.db.insert_row("available_p", product)
+        else:
+            database.db.update_product_quantity("available_p", product)
+
+        material = dict()
+        material['b_id'] = self.branch_id
+        for row_idx in range(self.p_mat_table_manufact.rowCount()):
+            material['m_id'] = self.p_mat_table_manufact.item(row_idx, 0).mid
+            material['quantity'] = self.p_mat_table_manufact.item(row_idx, 5).text()
+            database.db.update_product_quantity("available_m", material)
+
+        self.clear_product_manufact()
+        self.update_product_branch_table()
+        self.update_material_branch_table()
 
     def clear_product_manufact(self):
         self.p_code_manufact.clear()
@@ -1780,6 +1883,8 @@ if __name__ == '__main__':
     mainWindow = AppMainWindow()
     mainWindow.show()
     mainWindow.setWindowIcon(QtGui.QIcon('icons/ph1.png'))
+    os.system("mkdir -p /tmp/prisons")
+    exit_code = app.exec_()
+    os.system("rm -r /tmp/prisons")
     for filename in glob.glob("html/tmp/*"):
         os.remove(filename)
-    exit_code = app.exec_()
