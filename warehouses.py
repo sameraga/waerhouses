@@ -257,7 +257,6 @@ class Requests(QtWidgets.QDialog, Form_Requests):
 
     def print_bill(self):
         pass
-
 class InternalImex(QtWidgets.QDialog, Form_InternalImex):
     def __init__(self, id):
         QtWidgets.QDialog.__init__(self)
@@ -270,7 +269,7 @@ class InternalImex(QtWidgets.QDialog, Form_InternalImex):
         self.code = None
         self.b_id = id
         self.setup_control()
-
+        
     def setup_control(self):
         self.b_date.setDate(QDate.currentDate())
         self.branch_codes = database.db.query_csp("branches")
