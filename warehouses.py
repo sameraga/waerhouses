@@ -104,8 +104,11 @@ class Requests(QtWidgets.QDialog, Form_Requests):
             self.req_table.setItem(row_idx, 0, QtWidgets.QTableWidgetItem(str(row['code'])))
             self.req_table.item(row_idx, 0).id = row['id']
             self.req_table.item(row_idx, 0).mid = row['m_id']
+            self.req_table.item(row_idx, 0).setTextAlignment(QtCore.Qt.AlignCenter)
             self.req_table.setItem(row_idx, 1, QtWidgets.QTableWidgetItem(str(row['name'])))
+            self.req_table.item(row_idx, 1).setTextAlignment(QtCore.Qt.AlignCenter)
             self.req_table.setItem(row_idx, 2, QtWidgets.QTableWidgetItem(str(row['quantity'])))
+            self.req_table.item(row_idx, 2).setTextAlignment(QtCore.Qt.AlignCenter)
             self.req_table.setItem(row_idx, 3, QtWidgets.QTableWidgetItem(str(row['requester'])))
             self.req_table.setItem(row_idx, 4, QtWidgets.QTableWidgetItem(str(row['description'])))
             self.req_table.setItem(row_idx, 5, QtWidgets.QTableWidgetItem(str(row['quantity'])))
@@ -174,7 +177,7 @@ class Requests(QtWidgets.QDialog, Form_Requests):
             self.req_table.setItem(current_row, 2, QtWidgets.QTableWidgetItem('1'))
         quantity_req = int(self.req_table.item(current_row, 2).text())
 
-        total_req = quantity_req * float(self.req_table.item(current_row, 5).text())
+        total_req = round(quantity_req * float(self.req_table.item(current_row, 5).text()), 2)
         self.req_table.setItem(current_row, 6, QtWidgets.QTableWidgetItem(str(total_req)))
 
         if self.req_table.item(current_row, 10).text() == '':
@@ -258,7 +261,7 @@ class Requests(QtWidgets.QDialog, Form_Requests):
         else:
             database.db.update_row("requests", request)
 
-        database.db.insert_table('req_order', orders)
+        database.db.insert_request_order('req_order', orders, self.r_id)
         self.accept()
 
     def print_bill(self):
@@ -799,6 +802,7 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
                 if self.m_img.attach:
                     material['pic'] = assets.create_asset(material['id'], self.m_img.attach, self.config['password'])
                 database.db.insert_row("material", material)
+                self.material_codes = database.db.query_csp("material")
                 toaster_Notify.QToaster.show_message(parent=self, message=f"إضافة مادة\nتم إضافة المادة {material['name']} بنجاح")
                 self.update_material_table()
                 self.clear_material_inputs()
@@ -819,6 +823,7 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
                 else:
                     material['pic'] = self.m_img.asset
                 database.db.update_row("material", material)
+                self.material_codes = database.db.query_csp("material")
                 self.update_material_table()
                 self.clear_material_inputs()
                 toaster_Notify.QToaster.show_message(parent=self,
@@ -848,6 +853,7 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
                                     msg.No)
         if button_reply == msg.Yes:
             database.db.delete_row("material", self.material_id)
+            self.material_codes = database.db.query_csp("material")
             try:
                 shutil.rmtree(f"assets/{self.material_id}")
             except OSError as e:

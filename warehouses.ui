@@ -1842,7 +1842,7 @@
               <item>
                <widget class="QTabWidget" name="tabWidget_3">
                 <property name="currentIndex">
-                 <number>1</number>
+                 <number>0</number>
                 </property>
                 <widget class="QWidget" name="tab_12">
                  <attribute name="title">
@@ -2972,7 +2972,7 @@
               <item>
                <widget class="QTabWidget" name="tabWidget_2">
                 <property name="currentIndex">
-                 <number>2</number>
+                 <number>1</number>
                 </property>
                 <widget class="QWidget" name="tab_6">
                  <attribute name="title">
@@ -3382,7 +3382,10 @@
                          </sizepolicy>
                         </property>
                         <property name="text">
-                         <string>صورة المنتج</string>
+                         <string/>
+                        </property>
+                        <property name="pixmap">
+                         <pixmap resource="icons.qrc">:/icons/icons/emp.png</pixmap>
                         </property>
                         <property name="alignment">
                          <set>Qt::AlignCenter</set>

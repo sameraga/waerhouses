@@ -90,6 +90,19 @@ class Database:
         for d in del_ids:
             self.delete_row(table, d['id'])
 
+    def insert_request_order(self, table, dic, fk):
+        new_ids = [d['id'] for d in dic]
+        placeholders = ", ".join("?" * len(new_ids))
+        del_ids = self.connection.execute(f"SELECT id FROM {table} WHERE req_id = ? and id not in ({placeholders})",
+                                          tuple([fk, *new_ids])).fetchall()
+        for d in dic:
+            if self.count_table(table, d['id']) == '1':
+                self.update_row(table, d)
+            else:
+                self.insert_row(table, d)
+        for d in del_ids:
+            self.delete_row(table, d['id'])
+
     def insert_row(self, table, row):
         def _insert(obj):
             columns = ', '.join(obj.keys())
