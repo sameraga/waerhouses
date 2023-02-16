@@ -68,6 +68,7 @@ class Requests(QtWidgets.QDialog, Form_Requests):
         delegate = ReadOnlyDelegate(self.req_table)
         self.req_table.setItemDelegateForColumn(1, delegate)
         self.req_table.setItemDelegateForColumn(4, delegate)
+        self.req_table.setItemDelegateForColumn(5, delegate)
         self.req_table.setItemDelegateForColumn(6, delegate)
         self.req_table.setItemDelegateForColumn(12, delegate)
         self.req_table.setRowCount(1)
@@ -164,11 +165,11 @@ class Requests(QtWidgets.QDialog, Form_Requests):
     def enter_event(self, current_row):
         code = self.req_table.item(current_row, 0).text()
         material = database.db.get_all_by_code("material", code)
-        if self.req_table.item(current_row, 6).text() == '':
-            self.req_table.setItem(current_row, 6, QtWidgets.QTableWidgetItem('0'))
-
-        if self.req_table.item(current_row, 12).text() == '':
-            self.req_table.setItem(current_row, 12, QtWidgets.QTableWidgetItem('0'))
+        # if self.req_table.item(current_row, 6).text() == '':
+        #     self.req_table.setItem(current_row, 6, QtWidgets.QTableWidgetItem('0'))
+        #
+        # if self.req_table.item(current_row, 12).text() == '':
+        #     self.req_table.setItem(current_row, 12, QtWidgets.QTableWidgetItem('0'))
 
         if self.req_table.item(current_row, 2).text() == '':
             self.req_table.setItem(current_row, 2, QtWidgets.QTableWidgetItem('1'))
@@ -178,7 +179,7 @@ class Requests(QtWidgets.QDialog, Form_Requests):
         self.req_table.setItem(current_row, 6, QtWidgets.QTableWidgetItem(str(total_req)))
 
         if self.req_table.item(current_row, 10).text() == '':
-            self.req_table.setItem(current_row, 10, QtWidgets.QTableWidgetItem('1'))
+            self.req_table.setItem(current_row, 10, QtWidgets.QTableWidgetItem('0'))
         quantity_rec = int(self.req_table.item(current_row, 10).text())
 
         total_req = quantity_rec * float(self.req_table.item(current_row, 11).text())
@@ -208,7 +209,7 @@ class Requests(QtWidgets.QDialog, Form_Requests):
         orders = []
         for idx in range(self.req_table.rowCount()):
             order = dict()
-            order['r_id'] = self.r_id
+            order['req_id'] = self.r_id
             if self.req_table.item(idx, 0) and self.req_table.item(idx, 0).text():
                 if hasattr(self.req_table.item(idx, 0), 'id'):
                     order['id'] = self.req_table.item(idx, 0).id
