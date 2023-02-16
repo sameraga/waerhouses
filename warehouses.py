@@ -104,8 +104,11 @@ class Requests(QtWidgets.QDialog, Form_Requests):
             self.req_table.setItem(row_idx, 0, QtWidgets.QTableWidgetItem(str(row['code'])))
             self.req_table.item(row_idx, 0).id = row['id']
             self.req_table.item(row_idx, 0).mid = row['m_id']
+            self.req_table.item(row_idx, 0).setTextAlignment(QtCore.Qt.AlignCenter)
             self.req_table.setItem(row_idx, 1, QtWidgets.QTableWidgetItem(str(row['name'])))
+            self.req_table.item(row_idx, 1).setTextAlignment(QtCore.Qt.AlignCenter)
             self.req_table.setItem(row_idx, 2, QtWidgets.QTableWidgetItem(str(row['quantity'])))
+            self.req_table.item(row_idx, 2).setTextAlignment(QtCore.Qt.AlignCenter)
             self.req_table.setItem(row_idx, 3, QtWidgets.QTableWidgetItem(str(row['requester'])))
             self.req_table.setItem(row_idx, 4, QtWidgets.QTableWidgetItem(str(row['description'])))
             self.req_table.setItem(row_idx, 5, QtWidgets.QTableWidgetItem(str(row['quantity'])))
@@ -174,7 +177,7 @@ class Requests(QtWidgets.QDialog, Form_Requests):
             self.req_table.setItem(current_row, 2, QtWidgets.QTableWidgetItem('1'))
         quantity_req = int(self.req_table.item(current_row, 2).text())
 
-        total_req = quantity_req * float(self.req_table.item(current_row, 5).text())
+        total_req = round(quantity_req * float(self.req_table.item(current_row, 5).text()), 2)
         self.req_table.setItem(current_row, 6, QtWidgets.QTableWidgetItem(str(total_req)))
 
         if self.req_table.item(current_row, 10).text() == '':
@@ -258,7 +261,7 @@ class Requests(QtWidgets.QDialog, Form_Requests):
         else:
             database.db.update_row("requests", request)
 
-        database.db.insert_table('req_order', orders)
+        database.db.insert_request_order('req_order', orders, self.r_id)
         self.accept()
 
     def print_bill(self):
@@ -495,6 +498,9 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
 
         self.m_img.attach = None
         self.m_img.asset = None
+
+        self.p_img.attach = None
+        self.p_img.asset = None
 
         self._typing_timer_m = QtCore.QTimer()
         self.material_id = 0
@@ -796,6 +802,7 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
                 if self.m_img.attach:
                     material['pic'] = assets.create_asset(material['id'], self.m_img.attach, self.config['password'])
                 database.db.insert_row("material", material)
+                self.material_codes = database.db.query_csp("material")
                 toaster_Notify.QToaster.show_message(parent=self, message=f"إضافة مادة\nتم إضافة المادة {material['name']} بنجاح")
                 self.update_material_table()
                 self.clear_material_inputs()
@@ -816,6 +823,7 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
                 else:
                     material['pic'] = self.m_img.asset
                 database.db.update_row("material", material)
+                self.material_codes = database.db.query_csp("material")
                 self.update_material_table()
                 self.clear_material_inputs()
                 toaster_Notify.QToaster.show_message(parent=self,
@@ -845,6 +853,7 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
                                     msg.No)
         if button_reply == msg.Yes:
             database.db.delete_row("material", self.material_id)
+            self.material_codes = database.db.query_csp("material")
             try:
                 shutil.rmtree(f"assets/{self.material_id}")
             except OSError as e:
@@ -1143,6 +1152,8 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
         self.p_price.setValidator(self.validator_money)
         self.p_cost.setValidator(self.validator_money)
 
+        self.p_img.mousePressEvent = lambda *args, **kwargs: self.pick_image(self.p_img)
+
         self._typing_timer_p.setSingleShot(True)
         self._typing_timer_p.timeout.connect(self.update_product_table)
 
@@ -1267,8 +1278,16 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
         product = dict()
         if self.product_id == 0:
             product['id'] = str(uuid8())
+            if self.p_img.attach:
+                product['pic'] = assets.create_asset(product['id'], self.p_img.attach, self.config['password'])
         else:
             product['id'] = self.product_id
+            if self.p_img.attach:
+                if self.p_img.asset:
+                    assets.asset_delete(product['id'], self.p_img.asset)
+                product['pic'] = assets.create_asset(product['id'], self.p_img.attach, self.config['password'])
+            else:
+                product['pic'] = self.p_img.asset
 
         product['code'] = self.p_code.text()
         product['name'] = self.p_name.text()
@@ -1405,6 +1424,11 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
         self.p_mat_table.clearContents()
         self.p_mat_table.setRowCount(1)
 
+        pixmap = QtGui.QPixmap("icons/empty.png")
+        self.p_img.setPixmap(pixmap.scaled(self.p_img.size(), QtCore.Qt.KeepAspectRatio))
+        self.p_img.attach = None
+        self.p_img.asset = None
+
         self.btn_edit_show_product.setEnabled(False)
         self.btn_delete_product.setEnabled(False)
 
@@ -1416,6 +1440,10 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
                                     msg.No)
         if button_reply == msg.Yes:
             database.db.delete_row("product", self.product_id)
+            try:
+                shutil.rmtree(f"assets/{self.product_id}")
+            except OSError as e:
+                print("Error: %s - %s." % (e.filename, e.strerror))
             self.update_product_table()
             toaster_Notify.QToaster.show_message(parent=self, message=f"حذف منتج\nتم حذف المنتج{product['name']} بنجاح")
 
@@ -1442,6 +1470,14 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
         self.p_description.setText(product['description'])
         self.p_price.setText(str(product['price']))
         self.p_cost.setText(str(product['cost']))
+
+        self.p_img.asset = product['pic']
+        if product['pic']:
+            pixmap = QtGui.QPixmap(assets.decrypt_asset(id, product['pic'], self.config['password']))
+        else:
+            pixmap = QtGui.QPixmap("icons/empty.png")
+
+        self.p_img.setPixmap(pixmap.scaled(self.p_img.size(), QtCore.Qt.KeepAspectRatio))
 
         orders = database.db.get_product_material('pro_mat_v', id)
         self.p_mat_table.setRowCount(len(orders) + 1)
