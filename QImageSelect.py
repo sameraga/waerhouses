@@ -1,7 +1,16 @@
-from typing import Union
+from typing import Optional, Union
+
 from PyQt5.QtCore import QRect, QSize, Qt
 from PyQt5.QtGui import QPixmap, QTransform
-from PyQt5.QtWidgets import QDialog, QHBoxLayout, QLabel, QPushButton, QRubberBand, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import (
+    QDialog,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QRubberBand,
+    QVBoxLayout,
+    QWidget,
+)
 
 
 class QImageSelect(QDialog):
@@ -24,51 +33,86 @@ class QImageSelect(QDialog):
         Cropped qpixmap
     """
 
-    result = None
     ROTATE_BTN_MAX_WIDTH = 35
 
     @classmethod
-    def spawn(cls, title: str, image: Union[str, QPixmap], maximum_size: QSize, parent: QWidget = None) -> QPixmap:
+    def spawn(
+        cls,
+        title: str,
+        image: Union[str, QPixmap],
+        maximum_size: QSize,
+        parent: Optional[QWidget] = None,
+        keep_original_size: bool = True,
+    ) -> Optional[QPixmap]:
         """Create instance of QImageSelect, execute it and return cropped qpixmap
 
         Parameters
         ----------
         title : str
-            Dialog title
+            Dialog title.
         image : Union[str, QPixmap]
-            Image path or qpixmap
+            Image path or qpixmap.
         maximum_size : QSize
-            Maximum dialog size
+            Maximum dialog size.
         parent : QWidget, optional
-            Parent widget, by default None
+            Parent widget, by default None.
+        keep_original_size : bool
+            Whether to keep original image resolution, defaults true.
 
         Returns
         -------
         QPixmap
             Cropped qpixmap
         """
+
         dialog = cls(title=title, image=image, maximum_size=maximum_size, parent=parent)
         if not dialog.exec():
             return None
-        rect = dialog.pic.selected_rect
-        if not rect:
-            rect = dialog.pixmap.rect()
-        return dialog.pixmap.copy(rect.x(), rect.y(), rect.width(), rect.height())
+        selection = dialog.selection
+        ratio = dialog.ratio if keep_original_size else 1.0
+        return dialog.pixmap.copy(
+            QRect(selection.topLeft() * ratio, selection.bottomRight() * ratio)
+        )
 
-    def __init__(self, title: str, image: Union[str, QPixmap], maximum_size: QSize, parent: QWidget = None):
+    @property
+    def transform(self) -> QTransform:
+        return QTransform().rotate(self._angle)
+
+    @property
+    def selection(self) -> QRect:
+        return self.view.selected_rect or self.view.rect()
+
+    @property
+    def ratio(self) -> float:
+        return self.pixmap.width() / self.view.width()
+
+    @property
+    def pixmap(self) -> QPixmap:
+        return self._pixmap.transformed(self.transform)
+
+    def __init__(
+        self,
+        title: str,
+        image: Union[str, QPixmap],
+        maximum_size: QSize,
+        parent: Optional[QWidget] = None,
+    ):
         """Create instance of QImageSelect."""
 
+        self._max_size = maximum_size
+        self._pixmap = QPixmap(image)
+        self._angle = 0
         super(QImageSelect, self).__init__(parent)
-        self.initUI(title, image, maximum_size)
+        self.initUI(title)
 
-    def initUI(self, title: str, image: Union[str, QPixmap], maximum_size: QSize):
+    def initUI(self, title: str):
         """Initialize UI."""
 
         self.setWindowTitle(title)
 
         self.bg_layout = QVBoxLayout(self)
         self.bg_layout.setContentsMargins(0, 0, 0, 0)
-        self.pic = self.QImageLabel(self)
+        self.view = self.QImageLabel(self)
         self.btn_container = QWidget(self)
         self.btn_layout = QHBoxLayout(self.btn_container)
         self.btn_layout.setContentsMargins(0, 0, 0, 0)
@@ -78,10 +122,8 @@ class QImageSelect(QDialog):
         self.btn_layout.addWidget(self.btn_rotate)
         self.btn_layout.addWidget(self.btn_ok)
         self.bg_layout.addWidget(self.btn_container)
-        self.bg_layout.addWidget(self.pic)
+        self.bg_layout.addWidget(self.view)
 
-        self.pixmap = QPixmap(image)
-        self.pixmap = self.pixmap.scaled(maximum_size, Qt.KeepAspectRatio, Qt.SmoothTransformation)
         self.adjust_image(0)
 
         self.setMouseTracking(True)
@@ -91,12 +133,16 @@ class QImageSelect(QDialog):
     def adjust_image(self, rotate_degree: int = 90):
         """Rotate image and resize dialog."""
 
-        transform = QTransform().rotate(rotate_degree)
-        self.pixmap = self.pixmap.transformed(transform)
-        width = self.pixmap.width()
-        hight = self.pixmap.height()
+        self._angle += rotate_degree
+        pixmap = self._pixmap.scaled(
+            self._max_size,
+            Qt.AspectRatioMode.KeepAspectRatio,
+            Qt.TransformationMode.SmoothTransformation,
+        ).transformed(self.transform, Qt.TransformationMode.SmoothTransformation)
+        width = pixmap.width()
+        hight = pixmap.height()
         self.setFixedSize(width, hight + 45)
-        self.pic.setPixmap(self.pixmap)
+        self.view.setPixmap(pixmap)
 
     class QImageLabel(QLabel):
         """Customized QLabel with rubberband support.
@@ -111,19 +157,24 @@ class QImageSelect(QDialog):
             """Create instance of QImageLabel."""
 
             super().__init__(parent=parent)
-            self.rubberband = QRubberBand(QRubberBand.Rectangle, self)
+            self.rubberband = QRubberBand(QRubberBand.Shape.Rectangle, self)
             self.selected_rect = QRect()
 
         def mousePressEvent(self, event):
-            if event.button() == Qt.LeftButton:
+            if event.button() == Qt.MouseButton.LeftButton:
                 self.origin = event.pos()
                 self.rubberband.setGeometry(QRect(self.origin, QSize()))
                 self.rubberband.show()
 
         def mouseMoveEvent(self, event):
             if self.rubberband.isVisible():
-                self.rubberband.setGeometry(QRect(self.origin, event.pos()).normalized() & self.rect())
+                self.rubberband.setGeometry(
+                    QRect(self.origin, event.pos()).normalized() & self.rect()
+                )
 
         def mouseReleaseEvent(self, event):
-            if self.rubberband.isVisible() and event.button() == Qt.LeftButton:
+            if (
+                self.rubberband.isVisible()
+                and event.button() == Qt.MouseButton.LeftButton
+            ):
                 self.selected_rect = self.rubberband.geometry().normalized()
