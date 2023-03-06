@@ -46,6 +46,7 @@ class ReadOnlyDelegate(QtWidgets.QStyledItemDelegate):
 
 class Requests(QtWidgets.QDialog, Form_Requests):
     req_table: QtWidgets.QTableWidget
+
     def __init__(self, id):
         QtWidgets.QDialog.__init__(self)
         Form_Requests.__init__(self)
@@ -200,7 +201,7 @@ class Requests(QtWidgets.QDialog, Form_Requests):
         total_req = round(quantity_req * float(self.req_table.item(current_row, 5).text()), 2)
         self.req_table.setItem(current_row, 6, QtWidgets.QTableWidgetItem(str(total_req)))
 
-        if self.req_table.item(current_row, 10) and self.req_table.item(current_row, 10).text() :
+        if self.req_table.item(current_row, 10) and self.req_table.item(current_row, 10).text():
             quantity_buy = int(self.req_table.item(current_row, 10).text())
 
         if self.req_table.item(current_row, 11) and self.req_table.item(current_row, 11).text():
@@ -288,6 +289,7 @@ class Requests(QtWidgets.QDialog, Form_Requests):
 class InternalImex(QtWidgets.QDialog, Form_InternalImex):
     bill_type: QtWidgets.QComboBox
     receiver_brunch: QtWidgets.QComboBox
+
     def __init__(self, id):
         QtWidgets.QDialog.__init__(self)
         Form_InternalImex.__init__(self)
@@ -344,7 +346,6 @@ class InternalImex(QtWidgets.QDialog, Form_InternalImex):
             # self.receiver_brunch.currentIndex(0)
             self.sender_brunch.setEnabled(False)
             self.receiver_brunch.setEnabled(True)
-
 
     def fill_bill(self, id):
         if id == 0:
@@ -440,7 +441,7 @@ class InternalImex(QtWidgets.QDialog, Form_InternalImex):
                 for idx in range(self.internal_table.rowCount() - 1):
                     if self.internal_table.item(idx, 0).text() == material['code']:
                         toaster_Notify.QToaster.show_message(parent=self,
-                                                                 message=f"مكرر\n هذه المادة موجودة في الفاتورة ")
+                                                             message=f"مكرر\n هذه المادة موجودة في الفاتورة ")
                         self.internal_table.setItem(current_row, 0, QtWidgets.QTableWidgetItem(''))
 
                         return
@@ -883,7 +884,8 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
                     material['pic'] = assets.create_asset(material['id'], self.m_img.attach, self.config['password'])
                 database.db.insert_row("material", material)
                 self.material_codes = database.db.query_csp("material")
-                toaster_Notify.QToaster.show_message(parent=self, message=f"إضافة مادة\nتم إضافة المادة {material['name']} بنجاح")
+                toaster_Notify.QToaster.show_message(parent=self,
+                                                     message=f"إضافة مادة\nتم إضافة المادة {material['name']} بنجاح")
                 self.update_material_table()
                 self.clear_material_inputs()
             else:
@@ -940,7 +942,8 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
                 print("Error: %s - %s." % (e.filename, e.strerror))
             self.update_material_table()
             self.clear_material_inputs()
-            toaster_Notify.QToaster.show_message(parent=self, message=f"حذف مادة\nتم حذف المادة{material['name']} بنجاح")
+            toaster_Notify.QToaster.show_message(parent=self,
+                                                 message=f"حذف مادة\nتم حذف المادة{material['name']} بنجاح")
 
         self.btn_delete_material.setEnabled(False)
 
@@ -1076,7 +1079,8 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
                     label.setPixmap(pixmap.scaled(label.size(), QtCore.Qt.KeepAspectRatio))
         elif msg.clickedButton() == btn_show:
             if label.asset:
-                os.system('xdg-open "' + assets.decrypt_asset(self.material_id, label.asset, self.config['password']) + '"')
+                os.system(
+                    'xdg-open "' + assets.decrypt_asset(self.material_id, label.asset, self.config['password']) + '"')
             else:
                 QtWidgets.QMessageBox.warning(None, 'خطأ', 'لا يوجد صورة لعرضها')
         elif msg.clickedButton() == btn_export:
@@ -1126,7 +1130,8 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
         material_branch = self.save_material_branch_info()
 
         if material_branch['b_id'] and material_branch['m_id']:
-            if int(database.db.count_quantity_branch("available_m", material_branch['b_id'], material_branch['m_id'])) == 0:
+            if int(database.db.count_quantity_branch("available_m", material_branch['b_id'],
+                                                     material_branch['m_id'])) == 0:
                 material_branch['id'] = str(uuid8())
                 database.db.insert_row("available_m", material_branch)
                 self.update_material_branch_table()
@@ -1151,7 +1156,8 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
             database.db.delete_row("available_m", self.material_branch_id)
             self.update_material_branch_table()
             self.clear_material_branch_inputs()
-            toaster_Notify.QToaster.show_message(parent=self, message=f"حذف قيد تواجد مادة \nتم حذف تواجد المادة من الفرع بنجاح")
+            toaster_Notify.QToaster.show_message(parent=self,
+                                                 message=f"حذف قيد تواجد مادة \nتم حذف تواجد المادة من الفرع بنجاح")
 
         self.btn_delete_material_branch.setEnabled(False)
 
@@ -1166,15 +1172,18 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
 
     def update_material_branch_table(self):
         fil = self.search_material_branch_save()
-        rows = database.db.query_all_material_branch("available_m", fil, self.material_branch_page_size.value() * (self.material_branch_page_num.value() - 1), self.material_branch_page_size.value())
+        rows = database.db.query_all_material_branch("available_m", fil, self.material_branch_page_size.value() * (
+                    self.material_branch_page_num.value() - 1), self.material_branch_page_size.value())
 
         self.material_branch_table.setRowCount(len(rows))
         for row_idx, row in enumerate(rows):
             self.material_branch_table.setItem(row_idx, 0, QtWidgets.QTableWidgetItem(
-                str(row_idx + 1 + (self.material_branch_page_size.value() * (self.material_branch_page_num.value() - 1)))))
+                str(row_idx + 1 + (
+                            self.material_branch_page_size.value() * (self.material_branch_page_num.value() - 1)))))
             self.material_branch_table.item(row_idx, 0).id = row['id']
             self.material_branch_table.item(row_idx, 0).setTextAlignment(QtCore.Qt.AlignCenter)
-            self.material_branch_table.setItem(row_idx, 1, QtWidgets.QTableWidgetItem(str(self.branch_codes[row['b_id']])))
+            self.material_branch_table.setItem(row_idx, 1,
+                                               QtWidgets.QTableWidgetItem(str(self.branch_codes[row['b_id']])))
             self.material_branch_table.item(row_idx, 1).setTextAlignment(QtCore.Qt.AlignCenter)
             self.material_branch_table.setItem(row_idx, 2, QtWidgets.QTableWidgetItem(self.material_codes[row['m_id']]))
             self.material_branch_table.item(row_idx, 2).setTextAlignment(QtCore.Qt.AlignCenter)
@@ -1212,7 +1221,8 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
 
         self.m_b_code.setText(self.material_codes[material_branch['m_id']])
         self.m_b_code.setEnabled(False)
-        self.m_b_name.setText(database.db.get_all_by_code("material", self.material_codes[material_branch['m_id']])['name'])
+        self.m_b_name.setText(
+            database.db.get_all_by_code("material", self.material_codes[material_branch['m_id']])['name'])
         self.m_quantity.setText(material_branch['quantity'])
         self.m_place.setText(material_branch['place'])
 
@@ -1307,13 +1317,16 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
         self.p_b_code_search.textChanged.connect(lambda text: self._typing_timer_p_b.start(1000))
         self.p_branches_search.currentTextChanged.connect(lambda text: self._typing_timer_p_b.start(1000))
 
-        self.product_branch_page_num.setRange(1, math.ceil(int(database.db.count_row("available_p", 1)) / self.product_branch_page_size.value()))
+        self.product_branch_page_num.setRange(1, math.ceil(
+            int(database.db.count_row("available_p", 1)) / self.product_branch_page_size.value()))
         self.product_branch_page_num.valueChanged.connect(lambda text: self._typing_timer_p_b.start(1000))
         self.product_branch_page_size.valueChanged.connect(lambda: self.change_page_size('product_branch'))
 
         self.product_branch_table.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
-        self.product_branch_table.doubleClicked.connect(lambda mi: self.fill_product_branch_info(self.product_branch_table.item(mi.row(), 0).id))
-        self.product_branch_table.clicked.connect(lambda mi: self.one_click_p_b(self.product_branch_table.item(mi.row(), 0).id))
+        self.product_branch_table.doubleClicked.connect(
+            lambda mi: self.fill_product_branch_info(self.product_branch_table.item(mi.row(), 0).id))
+        self.product_branch_table.clicked.connect(
+            lambda mi: self.one_click_p_b(self.product_branch_table.item(mi.row(), 0).id))
 
         # btn
         self.btn_add_product_branch.clicked.connect(self.create_new_product_branch)
@@ -1326,9 +1339,12 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
         self.btn_to_exel_product_branch.clicked.connect(lambda: self.to_excel(self.product_branch_table))
 
         # pages
-        self.product_branch_post.clicked.connect(lambda: self.product_branch_page_num.setValue(self.product_branch_page_num.value() + 1))
-        self.product_branch_previous.clicked.connect(lambda: self.product_branch_page_num.setValue(self.product_branch_page_num.value() - 1))
-        self.product_branch_last.clicked.connect(lambda: self.product_branch_page_num.setValue(math.ceil(int(database.db.count_row("available_p", 1)) / self.product_branch_page_size.value())))
+        self.product_branch_post.clicked.connect(
+            lambda: self.product_branch_page_num.setValue(self.product_branch_page_num.value() + 1))
+        self.product_branch_previous.clicked.connect(
+            lambda: self.product_branch_page_num.setValue(self.product_branch_page_num.value() - 1))
+        self.product_branch_last.clicked.connect(lambda: self.product_branch_page_num.setValue(
+            math.ceil(int(database.db.count_row("available_p", 1)) / self.product_branch_page_size.value())))
         self.product_branch_first.clicked.connect(lambda: self.product_branch_page_num.setValue(1))
 
         self.update_product_branch_table()
@@ -1437,7 +1453,7 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
 
     def update_product_material_table(self, current_row):
         code = self.p_mat_table.item(current_row, 0).text()
-        material: dict[str,str]
+        material: dict[str, str]
         mat_result = database.db.get_material_product_by_code("material", code)
         if len(mat_result) == 0:
             QtWidgets.QMessageBox.warning(None, 'خطأ', 'الرقم غير موجود\n أعد ادخال رقم صحيح')
@@ -1471,7 +1487,8 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
         self.p_mat_table.setItem(current_row, 1, QtWidgets.QTableWidgetItem(material['name']))
         self.p_mat_table.setItem(current_row, 2, QtWidgets.QTableWidgetItem('1'))
         self.p_mat_table.setItem(current_row, 3, QtWidgets.QTableWidgetItem(str(material['price'])))
-        total = float(self.p_mat_table.item(current_row, 2).text()) * float(self.p_mat_table.item(current_row, 3).text())
+        total = float(self.p_mat_table.item(current_row, 2).text()) * float(
+            self.p_mat_table.item(current_row, 3).text())
         total = round(total, 2)
         self.p_mat_table.setItem(current_row, 4, QtWidgets.QTableWidgetItem(str(total)))
 
@@ -1635,7 +1652,8 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
         product_branch = self.save_product_branch_info()
 
         if product_branch['b_id'] and product_branch['p_id']:
-            if int(database.db.count_quantity_branch("available_p", product_branch['b_id'], product_branch['p_id'])) == 0:
+            if int(database.db.count_quantity_branch("available_p", product_branch['b_id'],
+                                                     product_branch['p_id'])) == 0:
                 product_branch['id'] = str(uuid8())
                 database.db.insert_row("available_p", product_branch)
                 self.update_product_branch_table()
@@ -1660,7 +1678,8 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
             database.db.delete_row("available_p", self.product_branch_id)
             self.update_product_branch_table()
             self.clear_product_branch_inputs()
-            toaster_Notify.QToaster.show_message(parent=self, message=f"حذف قيد تواجد منتج \nتم حذف تواجد المنتج من الفرع بنجاح")
+            toaster_Notify.QToaster.show_message(parent=self,
+                                                 message=f"حذف قيد تواجد منتج \nتم حذف تواجد المنتج من الفرع بنجاح")
 
         self.btn_delete_product_branch.setEnabled(False)
 
@@ -1675,14 +1694,17 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
 
     def update_product_branch_table(self):
         fil = self.search_product_branch_save()
-        rows = database.db.query_all_material_branch("available_p", fil, self.material_branch_page_size.value() * (self.material_branch_page_num.value() - 1), self.material_branch_page_size.value())
+        rows = database.db.query_all_material_branch("available_p", fil, self.material_branch_page_size.value() * (
+                    self.material_branch_page_num.value() - 1), self.material_branch_page_size.value())
         self.product_branch_table.setRowCount(len(rows))
         for row_idx, row in enumerate(rows):
             self.product_branch_table.setItem(row_idx, 0, QtWidgets.QTableWidgetItem(
-                str(row_idx + 1 + (self.material_branch_page_size.value() * (self.material_branch_page_num.value() - 1)))))
+                str(row_idx + 1 + (
+                            self.material_branch_page_size.value() * (self.material_branch_page_num.value() - 1)))))
             self.product_branch_table.item(row_idx, 0).id = row['id']
             self.product_branch_table.item(row_idx, 0).setTextAlignment(QtCore.Qt.AlignCenter)
-            self.product_branch_table.setItem(row_idx, 1, QtWidgets.QTableWidgetItem(str(self.branch_codes[row['b_id']])))
+            self.product_branch_table.setItem(row_idx, 1,
+                                              QtWidgets.QTableWidgetItem(str(self.branch_codes[row['b_id']])))
             self.product_branch_table.item(row_idx, 1).setTextAlignment(QtCore.Qt.AlignCenter)
             self.product_branch_table.setItem(row_idx, 2, QtWidgets.QTableWidgetItem(self.product_codes[row['p_id']]))
             self.product_branch_table.item(row_idx, 2).setTextAlignment(QtCore.Qt.AlignCenter)
@@ -1720,7 +1742,8 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
 
         self.p_b_code.setText(self.product_codes[product_branch['p_id']])
         self.p_b_code.setEnabled(False)
-        self.p_b_name.setText(database.db.get_all_by_code("product", self.product_codes[product_branch['p_id']])['name'])
+        self.p_b_name.setText(
+            database.db.get_all_by_code("product", self.product_codes[product_branch['p_id']])['name'])
         self.p_quantity.setText(product_branch['quantity'])
         self.p_place.setText(product_branch['place'])
 
@@ -1786,13 +1809,16 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
                         quantity = int(qu['quantity']) - int(row['quantity'])
                         self.p_mat_table_manufact.setItem(row_idx, 7, QtWidgets.QTableWidgetItem(str(quantity)))
                     else:
-                        self.p_mat_table_manufact.setItem(row_idx, 7, QtWidgets.QTableWidgetItem("الكمية الموجودة لا تكفي"))
+                        self.p_mat_table_manufact.setItem(row_idx, 7,
+                                                          QtWidgets.QTableWidgetItem("الكمية الموجودة لا تكفي"))
                         manufact = False
                 else:
-                    self.p_mat_table_manufact.setItem(row_idx, 7, QtWidgets.QTableWidgetItem("لا توجد هذه المادة في المستودع"))
+                    self.p_mat_table_manufact.setItem(row_idx, 7,
+                                                      QtWidgets.QTableWidgetItem("لا توجد هذه المادة في المستودع"))
                     manufact = False
             else:
-                self.p_mat_table_manufact.setItem(row_idx, 7, QtWidgets.QTableWidgetItem("لا توجد هذه المادة في المستودع"))
+                self.p_mat_table_manufact.setItem(row_idx, 7,
+                                                  QtWidgets.QTableWidgetItem("لا توجد هذه المادة في المستودع"))
                 manufact = False
 
         self.btn_manufact.setEnabled(manufact)
@@ -1813,21 +1839,27 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
         for row_idx in range(self.p_mat_table_manufact.rowCount()):
             quantity = int(self.p_mat_table_manufact.item(row_idx, 2).text()) * product_quantity
             self.p_mat_table_manufact.setItem(row_idx, 5, QtWidgets.QTableWidgetItem(str(quantity)))
-            qu = database.db.get_id_by_mid("available_m", self.p_mat_table_manufact.item(row_idx, 0).mid, self.branch_id)
+            qu = database.db.get_id_by_mid("available_m", self.p_mat_table_manufact.item(row_idx, 0).mid,
+                                           self.branch_id)
             if qu:
                 if qu['quantity'] != '0':
                     if int(qu['quantity']) >= quantity:
-                        self.p_mat_table_manufact.setItem(row_idx, 7, QtWidgets.QTableWidgetItem(str(int(qu['quantity']) - quantity)))
+                        self.p_mat_table_manufact.setItem(row_idx, 7, QtWidgets.QTableWidgetItem(
+                            str(int(qu['quantity']) - quantity)))
                     else:
-                        self.p_mat_table_manufact.setItem(row_idx, 7, QtWidgets.QTableWidgetItem("الكمية الموجودة لا تكفي"))
+                        self.p_mat_table_manufact.setItem(row_idx, 7,
+                                                          QtWidgets.QTableWidgetItem("الكمية الموجودة لا تكفي"))
                         manufact = False
                 else:
-                    self.p_mat_table_manufact.setItem(row_idx, 7, QtWidgets.QTableWidgetItem("لا توجد هذه المادة في المستودع"))
+                    self.p_mat_table_manufact.setItem(row_idx, 7,
+                                                      QtWidgets.QTableWidgetItem("لا توجد هذه المادة في المستودع"))
                     manufact = False
             else:
-                self.p_mat_table_manufact.setItem(row_idx, 7, QtWidgets.QTableWidgetItem("لا توجد هذه المادة في المستودع"))
+                self.p_mat_table_manufact.setItem(row_idx, 7,
+                                                  QtWidgets.QTableWidgetItem("لا توجد هذه المادة في المستودع"))
                 manufact = False
-            total = float(self.p_mat_table_manufact.item(row_idx, 3).text()) * float(self.p_mat_table_manufact.item(row_idx, 5).text())
+            total = float(self.p_mat_table_manufact.item(row_idx, 3).text()) * float(
+                self.p_mat_table_manufact.item(row_idx, 5).text())
             total = round(total, 2)
             self.p_mat_table_manufact.setItem(row_idx, 6, QtWidgets.QTableWidgetItem(str(total)))
 
@@ -1948,7 +1980,7 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
         rows = database.db.query_all_bill("requests", fil, self.req_page_size.value() * (self.req_page_num.value() - 1),
                                           self.req_page_size.value())
         self.req_table.setRowCount(len(rows))
-        for row_idx, row in enumerate(rows): #??? row_idx
+        for row_idx, row in enumerate(rows):  # ??? row_idx
             self.req_table.setItem(row_idx, 0, QtWidgets.QTableWidgetItem(
                 str(row_idx + 1 + (self.req_page_size.value() * (self.req_page_num.value() - 1)))))
             self.req_table.item(row_idx, 0).id = row['id']
@@ -1995,9 +2027,12 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
         self._typing_timer_internal.timeout.connect(self.update_internal_table)
 
         self.internal_table.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
-        self.internal_table.doubleClicked.connect(lambda mi: self.double_click_internal(self.internal_table.item(mi.row(), 0).id))
-        self.internal_table.clicked.connect(lambda mi: self.one_click_internal(self.internal_table.item(mi.row(), 0).id))
-        self.internal_page_num.setRange(1, math.ceil(int(database.db.count_row("internal_imex", 1)) / self.internal_page_size.value()))
+        self.internal_table.doubleClicked.connect(
+            lambda mi: self.double_click_internal(self.internal_table.item(mi.row(), 0).id))
+        self.internal_table.clicked.connect(
+            lambda mi: self.one_click_internal(self.internal_table.item(mi.row(), 0).id))
+        self.internal_page_num.setRange(1, math.ceil(
+            int(database.db.count_row("internal_imex", 1)) / self.internal_page_size.value()))
 
         self.internal_code.textChanged.connect(lambda text: self._typing_timer_internal.start(1000))
         self.int_sender.currentTextChanged.connect(lambda text: self._typing_timer_internal.start(1000))
@@ -2011,7 +2046,8 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
 
         # pages
         self.internal_post.clicked.connect(lambda: self.internal_page_num.setValue(self.internal_page_num.value() + 1))
-        self.internal_previous.clicked.connect(lambda: self.internal_page_num.setValue(self.internal_page_num.value() - 1))
+        self.internal_previous.clicked.connect(
+            lambda: self.internal_page_num.setValue(self.internal_page_num.value() - 1))
         self.internal_last.clicked.connect(lambda: self.internal_page_num.setValue(
             math.ceil(int(database.db.count_row("internal_imex", 1)) / self.internal_page_size.value())))
         self.internal_first.clicked.connect(lambda: self.internal_page_num.setValue(1))
@@ -2028,6 +2064,7 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
         self.btn_edit_internal.setEnabled(False)
 
         self.update_internal_table()
+
     def one_click_internal(self, id):
         self.internal_id = id
         self.btn_edit_internal.setEnabled(True)
@@ -2043,14 +2080,12 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
         self.btn_edit_internal.setEnabled(False)
         self.update_internal_table()
 
-
-
     def update_internal_table(self):
         fil = self.search_internal_save()
         rows = database.db.query_all_bill("internal_imex", fil, self.internal_page_size.value() *
                                           (self.internal_page_num.value() - 1), self.internal_page_size.value())
         self.internal_table.setRowCount(len(rows))
-        for row_idx, row in enumerate(rows): #??? row_idx
+        for row_idx, row in enumerate(rows):  # ??? row_idx
             self.internal_table.setItem(row_idx, 0, QtWidgets.QTableWidgetItem(
                 str(row_idx + 1 + (self.internal_page_size.value() * (self.internal_page_num.value() - 1)))))
             self.internal_table.item(row_idx, 0).id = row['id']
@@ -2085,7 +2120,6 @@ class AppMainWindow(QtWidgets.QMainWindow, Form_Main):
                 fil['date_to'] = QDate.toString(self.internal_date_to.date())
 
         return fil
-
 
 
 if __name__ == '__main__':
